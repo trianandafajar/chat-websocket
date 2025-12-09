@@ -1,10 +1,11 @@
 "use client"
 
 import { useState } from "react"
-import { Mail, Lock, Eye, EyeOff } from "lucide-react"
+import { Mail, Lock, User, Eye, EyeOff } from "lucide-react"
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4 sm:p-6">
@@ -13,8 +14,26 @@ export default function LoginPage() {
         <div className="bg-card p-5 sm:p-6 space-y-5 sm:space-y-6 border border-border rounded-xl">
 
           <h2 className="text-xl sm:text-2xl font-bold text-center border-b border-border pb-4 sm:pb-5 text-foreground">
-            Login
+            Create Account
           </h2>
+
+          {/* Name */}
+          <div className="space-y-1.5 sm:space-y-2">
+            <label htmlFor="name" className="block text-sm sm:text-base font-medium text-foreground">
+              Full Name
+            </label>
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
+              <input
+                id="name"
+                type="text"
+                placeholder="Your name"
+                className="w-full pl-10 pr-4 py-2 sm:py-2.5 bg-input text-sm sm:text-base 
+                text-foreground placeholder-muted-foreground border border-border rounded-md
+                focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
+          </div>
 
           {/* Email */}
           <div className="space-y-1.5 sm:space-y-2">
@@ -55,8 +74,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute cursor-pointer right-3 top-1/2 -translate-y-1/2 
-                text-muted-foreground hover:text-foreground"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
               >
                 {showPassword ? (
                   <EyeOff className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -67,39 +85,46 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* Forgot Password */}
-          <div className="flex items-center justify-between">
-            
-            {/* Remember me */}
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                id="remember"
-                type="checkbox"
-                className="w-4 h-4 rounded border-border bg-input accent-primary"
-              />
-              <span className="text-sm sm:text-base text-muted-foreground">
-                Remember me
-              </span>
+          {/* Confirm Password */}
+          <div className="space-y-1.5 sm:space-y-2">
+            <label htmlFor="confirmPassword" className="block text-sm sm:text-base font-medium text-foreground">
+              Confirm Password
             </label>
 
-            {/* Forgot password */}
-            <button
-              onClick={() => (window.location.href = "/forgot-password")}
-              className="text-xs sm:text-sm text-primary hover:underline cursor-pointer"
-            >
-              Forgot password?
-            </button>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
 
+              <input
+                id="confirmPassword"
+                type={showConfirmPassword ? "text" : "password"}
+                placeholder="••••••••"
+                className="w-full pl-10 pr-11 sm:pr-12 py-2 sm:py-2.5 bg-input text-sm sm:text-base 
+                text-foreground placeholder-muted-foreground border border-border rounded-md
+                focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                {showConfirmPassword ? (
+                  <EyeOff className="w-4 h-4 sm:w-5 sm:h-5" />
+                ) : (
+                  <Eye className="w-4 h-4 sm:w-5 sm:h-5" />
+                )}
+              </button>
+            </div>
           </div>
 
-          {/* Sign In */}
+          {/* Create Account */}
           <button
-            onClick={() => (window.location.href = "/messages")}
+            onClick={() => (window.location.href = "/auth/verify")}
             className="w-full cursor-pointer bg-primary hover:bg-primary/90 
             text-primary-foreground font-semibold py-2 sm:py-2.5 rounded-md 
             text-sm sm:text-base transition-colors"
           >
-            Sign In
+            Create Account
           </button>
 
           {/* Divider */}
@@ -131,12 +156,12 @@ export default function LoginPage() {
 
         {/* Bottom text */}
         <p className="text-center text-xs sm:text-sm text-muted-foreground mt-4 sm:mt-5">
-          Don’t have an account?{" "}
-          <button
-            onClick={() => (window.location.href = "/register")}
+          Already have an account?{" "}
+          <button 
+            onClick={() => window.location.href = "/login"}
             className="text-primary cursor-pointer hover:underline font-medium"
-          >
-            Sign up
+            >
+            Sign in
           </button>
         </p>
 

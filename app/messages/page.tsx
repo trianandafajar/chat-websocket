@@ -25,6 +25,7 @@ export default function ChatApp() {
       { id: "3", text: "Perfect!", sender: "other", timestamp: "08:47 AM" },
     ],
   })
+
   const [inputValue, setInputValue] = useState("")
   const [showMobileMenu, setShowMobileMenu] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
@@ -45,24 +46,34 @@ export default function ChatApp() {
     }))
     setInputValue("")
   }
+
   return (
     <div className="h-screen bg-background flex overflow-hidden">
+
+      {/* Mobile Menu Toggle */}
       <button
-        className="md:hidden fixed top-4 left-4 z-50 p-2 bg-card border border-sidebar-border text-foreground hover:bg-sidebar-accent transition-colors"
+        className="md:hidden fixed top-3 cursor-pointer left-4 z-50 p-2 bg-card border border-sidebar-border
+        text-foreground hover:bg-sidebar-accent transition-colors rounded-md"
         onClick={() => setShowMobileMenu(!showMobileMenu)}
         title={showMobileMenu ? "Close menu" : "Open menu"}
       >
-        {showMobileMenu ? <X size={24} /> : <Menu size={24} />}
+        {showMobileMenu ? <X size={22} /> : <Menu size={22} />}
       </button>
 
+      {/* Mobile Backdrop */}
       {showMobileMenu && (
-        <div className="fixed inset-0 bg-black/50 md:hidden z-30" onClick={() => setShowMobileMenu(false)} />
+        <div
+          className="fixed inset-0 bg-black/50 md:hidden z-30 backdrop-blur-sm"
+          onClick={() => setShowMobileMenu(false)}
+        />
       )}
 
+      {/* SIDEBAR */}
       <div
-        className={`fixed md:relative w-64 md:w-80 h-full bg-sidebar border-r border-sidebar-border transition-all duration-300 z-40 ${
-          showMobileMenu ? "translate-x-0" : "-translate-x-full md:translate-x-0"
-        } ${sidebarCollapsed ? "md:w-20" : "md:w-80"}`}
+        className={`fixed md:relative h-full bg-sidebar border-r border-sidebar-border z-40 
+        transition-all duration-300 
+        ${showMobileMenu ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
+        ${sidebarCollapsed ? "md:w-20" : "md:w-80"} w-64`}
       >
         <div className="flex flex-col h-full">
           <UserList
@@ -76,28 +87,39 @@ export default function ChatApp() {
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col min-w-0">
+      {/* MAIN CHAT AREA */}
+      <div className="flex-1 flex flex-col min-w-0 bg-background">
+
         {selectedUserId ? (
           <>
+            {/* Chat Window */}
             <ChatWindow userId={selectedUserId} messages={messages[selectedUserId] || []} />
 
+            {/* Input Area */}
             <div className="p-4 border-t border-sidebar-border bg-card">
               <div className="flex gap-3">
+
                 <input
                   type="text"
                   placeholder="Type a message..."
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
-                  className="flex-1 px-4 py-2 bg-[#111111] border text-sm border-sidebar-border text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+                  className="flex-1 px-4 py-2 bg-input border border-sidebar-border 
+                  text-sm sm:text-base text-foreground placeholder-muted-foreground 
+                  focus:outline-none focus:ring-2 focus:ring-primary rounded-md transition-all"
                 />
+
                 <button
                   onClick={handleSendMessage}
-                  className="px-4 py-1 text-sm bg-primary hover:bg-primary/90 text-primary-foreground cursor-pointer transition-colors flex items-center gap-2 font-medium"
+                  className="px-4 py-2 bg-primary text-primary-foreground 
+                  hover:bg-primary/90 transition-colors cursor-pointer flex items-center gap-2 
+                  rounded-md font-medium text-sm sm:text-base"
                 >
                   <Send size={18} />
                   <span className="hidden sm:inline">Send</span>
                 </button>
+
               </div>
             </div>
           </>
@@ -106,6 +128,7 @@ export default function ChatApp() {
             <p>Select a conversation to start messaging</p>
           </div>
         )}
+
       </div>
     </div>
   )
