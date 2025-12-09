@@ -25,7 +25,6 @@ export function UserList({ selectedUserId, onSelectUser, collapsed }: UserListPr
         </div>
       )}
 
-      {/* Users */}
       <div className="flex-1 overflow-y-auto">
         {users.map((user) => (
           <button

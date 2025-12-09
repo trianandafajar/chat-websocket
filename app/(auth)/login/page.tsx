@@ -1,18 +1,18 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
 import { Mail, Lock } from "lucide-react"
 
-interface LoginPageProps {
-  onLogin: () => void
-}
+export default function LoginPage() {
 
-export function LoginPage({ onLogin }: LoginPageProps) {
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[#111111] flex items-center justify-center p-4">
       <div className="w-full max-w-md">
 
-        <div className="bg-card p-6 space-y-6 border border-border">
+
+        <div className="bg-black p-6 space-y-6 border border-border">
+
+          <h2 className="text-2xl font-bold text-center border-b border-border pb-5">Login</h2>
+          
           <div className="space-y-2">
             <label htmlFor="email" className="block text-sm font-medium text-foreground">
               Email Address
@@ -52,12 +52,12 @@ export function LoginPage({ onLogin }: LoginPageProps) {
             </label>
           </div>
 
-          <Button
-            onClick={onLogin}
-            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-2 transition-colors"
+          <button
+            onClick={() => window.location.href = "/messages"}
+            className="w-full cursor-pointer bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-2 transition-colors"
           >
             Sign In
-          </Button>
+          </button>
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">

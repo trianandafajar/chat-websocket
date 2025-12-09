@@ -1,12 +1,11 @@
 "use client"
 
 import { useState } from "react"
-import { UserList } from "./user-list"
-import { ChatWindow } from "./chat-window"
-import { Send, LogOut, Menu, X, ChevronLeft } from "lucide-react"
-import { Button } from "./ui/button"
+import { UserList } from "@/components/messages/user-list"
+import { ChatWindow } from "@/components/messages/chat-window"
+import { Send, Menu, X } from "lucide-react"
 
-export function ChatApp() {
+export default function ChatApp() {
   const [selectedUserId, setSelectedUserId] = useState<string | null>("user-2")
   const [messages, setMessages] = useState<
     Record<string, Array<{ id: string; text: string; sender: "me" | "other"; timestamp: string }>>

@@ -1,7 +1,7 @@
 "use client"
 
 import { users } from "@/lib/mock-data"
-import { LogOutIcon, MessageCircle } from "lucide-react"
+import { LogOutIcon } from "lucide-react"
 
 interface Message {
   id: string
