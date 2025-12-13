@@ -1,135 +1,291 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { UserList } from "@/components/messages/user-list"
-import { ChatWindow } from "@/components/messages/chat-window"
-import { Send, Menu, X } from "lucide-react"
+import { useEffect, useRef, useState } from "react";
+import { UserList } from "@/components/messages/user-list";
+import { ChatWindow } from "@/components/messages/chat-window";
+import { Send, Menu, X } from "lucide-react";
+import { useSession } from "next-auth/react";
+
+type User = {
+  id: string;
+  name?: string | null;
+  picture?: string | null;
+  isOnline?: boolean;
+};
+
+type Message = {
+  id: string;
+  sessionId?: string;
+  text: string;
+  senderId?: string;
+  createdAt: string;
+  pending?: boolean;
+};
+
+type Session = {
+  id: string;
+  isGroup?: boolean;
+  title?: string | null;
+  lastMessage?: string | null;
+  lastMessageAt?: string | null;
+  participants?: {
+    user: User;
+  }[];
+};
 
 export default function ChatApp() {
-  const [selectedUserId, setSelectedUserId] = useState<string | null>("user-2")
-  const [messages, setMessages] = useState<
-    Record<string, Array<{ id: string; text: string; sender: "me" | "other"; timestamp: string }>>
-  >({
-    "user-1": [
-      { id: "1", text: "Hey! How are you?", sender: "other", timestamp: "10:30 AM" },
-      { id: "2", text: "I'm doing great!", sender: "me", timestamp: "10:31 AM" },
-      { id: "3", text: "That's awesome!", sender: "other", timestamp: "10:32 AM" },
-    ],
-    "user-2": [
-      { id: "1", text: "Hi there!", sender: "other", timestamp: "09:15 AM" },
-      { id: "2", text: "Hello! What's up?", sender: "me", timestamp: "09:16 AM" },
-    ],
-    "user-3": [
-      { id: "1", text: "Project looks good", sender: "other", timestamp: "08:45 AM" },
-      { id: "2", text: "Thanks! I'll make those changes", sender: "me", timestamp: "08:46 AM" },
-      { id: "3", text: "Perfect!", sender: "other", timestamp: "08:47 AM" },
-    ],
-  })
+  const { data: session } = useSession();
 
-  const [inputValue, setInputValue] = useState("")
-  const [showMobileMenu, setShowMobileMenu] = useState(false)
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
+  const [messages, setMessages] = useState<Record<string, Message[]>>({});
+  const [inputValue, setInputValue] = useState("");
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [wsAlive, setWsAlive] = useState(false);
+
+  const wsRef = useRef<WebSocket | null>(null);
+  const lastPongRef = useRef(Date.now());
+  const reconnectTimerRef = useRef<number | null>(null);
+  const pingTimerRef = useRef<number | null>(null);
+
+  /* ================= FETCH DATA ================= */
+
+  useEffect(() => {
+    fetch("/api/sessions", { credentials: "include" })
+      .then((r) => r.ok && r.json())
+      .then((data) => {
+        if (!data) return;
+        setSessions(data);
+        if (!selectedSessionId && data.length) {
+          setSelectedSessionId(data[0].id);
+        }
+      })
+      .catch(console.error);
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/users", { credentials: "include" })
+      .then((r) => r.ok && r.json())
+      .then((data) => data && setUsers(data))
+      .catch(console.error);
+  }, []);
+
+  useEffect(() => {
+    if (!selectedSessionId) return;
+
+    fetch(`/api/sessions/${selectedSessionId}/messages`, {
+      credentials: "include",
+    })
+      .then((r) => r.json())
+      .then((msgs) =>
+        setMessages((prev) => ({ ...prev, [selectedSessionId]: msgs }))
+      )
+      .catch(console.error);
+  }, [selectedSessionId]);
+
+  /* ================= WEBSOCKET ================= */
+
+  useEffect(() => {
+    if (!session?.user?.id) return;
+
+    let mounted = true;
+
+    const connect = () => {
+      if (!mounted) return;
+
+      const protocol = location.protocol === "https:" ? "wss" : "ws";
+      const ws = new WebSocket(`${protocol}://${location.host}/api/ws`);
+      wsRef.current = ws;
+
+      ws.onopen = () => {
+        setWsAlive(true);
+        lastPongRef.current = Date.now();
+
+        ws.send(
+          JSON.stringify({
+            type: "auth",
+            userId: session.user.id,
+          })
+        );
+
+
+        if (pingTimerRef.current) clearInterval(pingTimerRef.current);
+        pingTimerRef.current = window.setInterval(() => {
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: "ping" }));
+            if (Date.now() - lastPongRef.current > 60_000) ws.close();
+          }
+        }, 20_000);
+      };
+
+      ws.onmessage = (evt) => {
+        const data = JSON.parse(evt.data);
+
+        if (data.type === "pong") {
+          lastPongRef.current = Date.now();
+          return;
+        }
+
+        if (data.type === "message") {
+          const sid = data.sessionId;
+
+          setMessages((prev) => {
+            const list = prev[sid] ?? [];
+            if (list.some((m) => m.id === data.message.id)) return prev;
+
+            return {
+              ...prev,
+              [sid]: [...list.filter((m) => !m.pending), data.message],
+            };
+          });
+
+          setSessions((prev) =>
+            prev.map((s) =>
+              s.id === sid
+                ? {
+                    ...s,
+                    lastMessage: data.message.text,
+                    lastMessageAt: data.message.createdAt,
+                  }
+                : s
+            )
+          );
+        }
+      };
+
+      ws.onclose = () => {
+        setWsAlive(false);
+        reconnectTimerRef.current = window.setTimeout(connect, 2000);
+      };
+
+      ws.onerror = () => ws.close();
+    };
+
+    connect();
+
+    return () => {
+      mounted = false;
+      wsRef.current?.close();
+      if (pingTimerRef.current) clearInterval(pingTimerRef.current);
+      if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
+    };
+  }, [session?.user?.id]);
+
+  /* ================= ACTIONS ================= */
+
+  const startChat = async (userId: string) => {
+    const res = await fetch("/api/sessions/start", {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId }),
+    });
+
+    if (!res.ok) return;
+
+    const newSession: Session = await res.json();
+    setSessions((prev) =>
+      prev.some((s) => s.id === newSession.id)
+        ? prev
+        : [newSession, ...prev]
+    );
+    setSelectedSessionId(newSession.id);
+  };
 
   const handleSendMessage = () => {
-    if (!inputValue.trim() || !selectedUserId) return
+    if (!inputValue.trim() || !selectedSessionId) return;
 
-    const newMessage = {
-      id: Date.now().toString(),
-      text: inputValue,
-      sender: "me" as const,
-      timestamp: new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
-    }
+    const tempId = crypto.randomUUID();
+    const text = inputValue.trim();
 
+    // optimistic UI
     setMessages((prev) => ({
       ...prev,
-      [selectedUserId]: [...(prev[selectedUserId] || []), newMessage],
-    }))
-    setInputValue("")
-  }
+      [selectedSessionId]: [
+        ...(prev[selectedSessionId] ?? []),
+        {
+          id: tempId,
+          sessionId: selectedSessionId,
+          text,
+          senderId: session?.user?.id,
+          createdAt: new Date().toISOString(),
+          pending: true,
+        },
+      ],
+    }));
+
+    wsRef.current?.send(
+      JSON.stringify({
+        type: "message",
+        sessionId: selectedSessionId,
+        text,
+      })
+    );
+
+    setInputValue("");
+  };
+
+  /* ================= UI ================= */
 
   return (
-    <div className="h-screen bg-background flex overflow-hidden">
-
-      {/* Mobile Menu Toggle */}
+    <div className="h-screen flex bg-background">
       <button
-        className="md:hidden fixed top-3 cursor-pointer left-4 z-50 p-2 bg-card border border-sidebar-border
-        text-foreground hover:bg-sidebar-accent transition-colors rounded-md"
-        onClick={() => setShowMobileMenu(!showMobileMenu)}
-        title={showMobileMenu ? "Close menu" : "Open menu"}
+        className="md:hidden fixed top-3 left-4 z-50"
+        onClick={() => setShowMobileMenu((v) => !v)}
       >
-        {showMobileMenu ? <X size={22} /> : <Menu size={22} />}
+        {showMobileMenu ? <X /> : <Menu />}
       </button>
 
-      {/* Mobile Backdrop */}
-      {showMobileMenu && (
-        <div
-          className="fixed inset-0 bg-black/50 md:hidden z-30 backdrop-blur-sm"
-          onClick={() => setShowMobileMenu(false)}
+      <div className={`w-72 border-r ${showMobileMenu ? "block" : "hidden md:block"}`}>
+        <UserList
+          sessions={sessions}
+          users={users}
+          selectedSessionId={selectedSessionId}
+          onSelectSession={setSelectedSessionId}
+          onStartChat={startChat}
         />
-      )}
-
-      {/* SIDEBAR */}
-      <div
-        className={`fixed md:relative h-full bg-sidebar border-r border-sidebar-border z-40 
-        transition-all duration-300 
-        ${showMobileMenu ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
-        ${sidebarCollapsed ? "md:w-20" : "md:w-80"} w-64`}
-      >
-        <div className="flex flex-col h-full">
-          <UserList
-            selectedUserId={selectedUserId}
-            onSelectUser={(userId) => {
-              setSelectedUserId(userId)
-              setShowMobileMenu(false)
-            }}
-            collapsed={sidebarCollapsed}
-          />
-        </div>
       </div>
 
-      {/* MAIN CHAT AREA */}
-      <div className="flex-1 flex flex-col min-w-0 bg-background">
+      <div className="flex-1 flex flex-col">
+        <div className="p-2 text-xs">
+          WebSocket:{" "}
+          <span className={wsAlive ? "text-green-500" : "text-red-500"}>
+            {wsAlive ? "connected" : "disconnected"}
+          </span>
+        </div>
 
-        {selectedUserId ? (
+        {selectedSessionId ? (
           <>
-            {/* Chat Window */}
-            <ChatWindow userId={selectedUserId} messages={messages[selectedUserId] || []} />
+            <ChatWindow
+              sessionId={selectedSessionId}
+              messages={messages[selectedSessionId] ?? []}
+              sessions={sessions}
+              currentUserId={session?.user?.id}
+            />
 
-            {/* Input Area */}
-            <div className="p-4 border-t border-sidebar-border bg-card">
-              <div className="flex gap-3">
-
-                <input
-                  type="text"
-                  placeholder="Type a message..."
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
-                  className="flex-1 px-4 py-2 bg-input border border-sidebar-border 
-                  text-sm sm:text-base text-foreground placeholder-muted-foreground 
-                  focus:outline-none focus:ring-2 focus:ring-primary rounded-md transition-all"
-                />
-
-                <button
-                  onClick={handleSendMessage}
-                  className="px-4 py-2 bg-primary text-primary-foreground 
-                  hover:bg-primary/90 transition-colors cursor-pointer flex items-center gap-2 
-                  rounded-md font-medium text-sm sm:text-base"
-                >
-                  <Send size={18} />
-                  <span className="hidden sm:inline">Send</span>
-                </button>
-
-              </div>
+            <div className="p-4 border-t flex gap-2">
+              <input
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                className="flex-1 border rounded px-3 py-2"
+                placeholder="Type message..."
+                onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
+              />
+              <button
+                onClick={handleSendMessage}
+                className="bg-primary text-white px-4 rounded"
+              >
+                <Send size={16} />
+              </button>
             </div>
           </>
         ) : (
           <div className="flex-1 flex items-center justify-center text-muted-foreground">
-            <p>Select a conversation to start messaging</p>
+            Pilih user untuk mulai chat
           </div>
         )}
-
       </div>
     </div>
-  )
+  );
 }

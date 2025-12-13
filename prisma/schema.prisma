@@ -1,21 +1,52 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client"
-  output   = "./generated/prisma"
+  output   = "../generated/prisma"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mongodb"
+  url = env("DATABASE_URL")
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  name      String?
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  email        String   @unique
+  name         String?
+  picture      String?  @default("https://via.placeholder.com/150")
+  authProvider String?  @default("jwt")
+  password     String?
+  providerId   String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  isOnline     Boolean @default(false)
+  lastSeen     DateTime?
+
+  messages Message[] @relation("UserMessages")
+}
+
+model Session {
+  id             String    @id @default(auto()) @map("_id") @db.ObjectId
+  participantIds String[] // array of ObjectId (string)
+  isGroup        Boolean   @default(false)
+  title          String?
+  lastMessage    String?
+  lastMessageAt  DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([lastMessageAt])
+}
+
+model Message {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  sessionId String
+  senderId  String?
+  text      String
+  read      Boolean  @default(false)
   createdAt DateTime @default(now())
+
+  sender User? @relation("UserMessages", fields: [senderId], references: [id])
+
+  @@index([sessionId, createdAt])
 }

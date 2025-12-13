@@ -3,5 +3,6 @@
 package-lock.json
 .next
 /lib/generated/prisma
-/prisma/generated
+/prisma/generated/*
 /prisma/migrations
+/generated/prisma
