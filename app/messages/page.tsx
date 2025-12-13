@@ -19,7 +19,6 @@ type Message = {
   text: string;
   senderId?: string;
   createdAt: string;
-  pending?: boolean;
 };
 
 type Session = {
@@ -34,8 +33,6 @@ type Session = {
 };
 
 export default function ChatApp() {
-  const { data: session } = useSession();
-
   const [sessions, setSessions] = useState<Session[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
@@ -45,32 +42,40 @@ export default function ChatApp() {
   const [wsAlive, setWsAlive] = useState(false);
 
   const wsRef = useRef<WebSocket | null>(null);
-  const lastPongRef = useRef(Date.now());
+  const lastPongRef = useRef<number>(Date.now());
   const reconnectTimerRef = useRef<number | null>(null);
   const pingTimerRef = useRef<number | null>(null);
 
-  /* ================= FETCH DATA ================= */
+  const { data: session } = useSession();
 
+  /**
+   * GET SESSIONS
+   */
   useEffect(() => {
     fetch("/api/sessions", { credentials: "include" })
-      .then((r) => r.ok && r.json())
+      .then((r) => (r.ok ? r.json() : []))
       .then((data) => {
-        if (!data) return;
         setSessions(data);
-        if (!selectedSessionId && data.length) {
+        if (data.length && !selectedSessionId) {
           setSelectedSessionId(data[0].id);
         }
       })
       .catch(console.error);
   }, []);
 
+  /**
+   * GET USERS
+   */
   useEffect(() => {
     fetch("/api/users", { credentials: "include" })
-      .then((r) => r.ok && r.json())
-      .then((data) => data && setUsers(data))
+      .then((r) => (r.ok ? r.json() : []))
+      .then(setUsers)
       .catch(console.error);
   }, []);
 
+  /**
+   * GET MESSAGES
+   */
   useEffect(() => {
     if (!selectedSessionId) return;
 
@@ -84,8 +89,9 @@ export default function ChatApp() {
       .catch(console.error);
   }, [selectedSessionId]);
 
-  /* ================= WEBSOCKET ================= */
-
+  /**
+   * WEBSOCKET CONNECT
+   */
   useEffect(() => {
     if (!session?.user?.id) return;
 
@@ -95,13 +101,19 @@ export default function ChatApp() {
       if (!mounted) return;
 
       const protocol = location.protocol === "https:" ? "wss" : "ws";
-      const ws = new WebSocket(`${protocol}://${location.host}/api/ws`);
+      const url = `${protocol}://${location.host}/api/ws`;
+
+      const ws = new WebSocket(url);
       wsRef.current = ws;
 
       ws.onopen = () => {
+        console.log("✅ WS connected");
         setWsAlive(true);
         lastPongRef.current = Date.now();
 
+        /**
+         * 🔐 AUTH KE WEBSOCKET (WAJIB)
+         */
         ws.send(
           JSON.stringify({
             type: "auth",
@@ -110,56 +122,77 @@ export default function ChatApp() {
         );
 
 
+
+        /**
+         * ❤️ HEARTBEAT
+         */
         if (pingTimerRef.current) clearInterval(pingTimerRef.current);
         pingTimerRef.current = window.setInterval(() => {
-          if (ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify({ type: "ping" }));
-            if (Date.now() - lastPongRef.current > 60_000) ws.close();
+          if (wsRef.current?.readyState === WebSocket.OPEN) {
+            wsRef.current.send(JSON.stringify({ type: "ping" }));
+
+            if (Date.now() - lastPongRef.current > 60_000) {
+              console.warn("⚠️ WS timeout, reconnecting...");
+              wsRef.current.close();
+            }
           }
         }, 20_000);
       };
 
       ws.onmessage = (evt) => {
-        const data = JSON.parse(evt.data);
+        try {
+          const data = JSON.parse(evt.data);
 
-        if (data.type === "pong") {
-          lastPongRef.current = Date.now();
-          return;
-        }
+          if (data.type === "pong") {
+            lastPongRef.current = Date.now();
+            setWsAlive(true);
+            return;
+          }
 
-        if (data.type === "message") {
-          const sid = data.sessionId;
+          if (data.type === "message") {
+            const sid = data.sessionId;
 
-          setMessages((prev) => {
-            const list = prev[sid] ?? [];
-            if (list.some((m) => m.id === data.message.id)) return prev;
+            setMessages((prev) => {
+              const list = prev[sid] ?? [];
+              if (list.some((m) => m.id === data.message.id)) return prev;
+              return { ...prev, [sid]: [...list, data.message] };
+            });
 
-            return {
-              ...prev,
-              [sid]: [...list.filter((m) => !m.pending), data.message],
-            };
-          });
+            setSessions((prev) =>
+              prev.map((s) =>
+                s.id === sid
+                  ? {
+                      ...s,
+                      lastMessage: data.message.text,
+                      lastMessageAt: data.message.createdAt,
+                    }
+                  : s
+              )
+            );
+          }
 
-          setSessions((prev) =>
-            prev.map((s) =>
-              s.id === sid
-                ? {
-                    ...s,
-                    lastMessage: data.message.text,
-                    lastMessageAt: data.message.createdAt,
-                  }
-                : s
-            )
-          );
+          if (data.type === "presence") {
+            console.log("👤 presence", data);
+          }
+        } catch (e) {
+          console.error("WS message error", e);
         }
       };
 
       ws.onclose = () => {
+        console.log("❌ WS closed");
         setWsAlive(false);
+
+        if (reconnectTimerRef.current)
+          clearTimeout(reconnectTimerRef.current);
+
         reconnectTimerRef.current = window.setTimeout(connect, 2000);
       };
 
-      ws.onerror = () => ws.close();
+      ws.onerror = (err) => {
+        console.error("WS error", err);
+        ws.close();
+      };
     };
 
     connect();
@@ -172,8 +205,9 @@ export default function ChatApp() {
     };
   }, [session?.user?.id]);
 
-  /* ================= ACTIONS ================= */
-
+  /**
+   * START CHAT
+   */
   const startChat = async (userId: string) => {
     const res = await fetch("/api/sessions/start", {
       method: "POST",
@@ -185,59 +219,59 @@ export default function ChatApp() {
     if (!res.ok) return;
 
     const newSession: Session = await res.json();
+
     setSessions((prev) =>
       prev.some((s) => s.id === newSession.id)
         ? prev
         : [newSession, ...prev]
     );
+
     setSelectedSessionId(newSession.id);
   };
 
-  const handleSendMessage = () => {
+  /**
+   * SEND MESSAGE
+   */
+  const handleSendMessage = async () => {
     if (!inputValue.trim() || !selectedSessionId) return;
 
-    const tempId = crypto.randomUUID();
-    const text = inputValue.trim();
+    const payload = {
+      type: "message",
+      sessionId: selectedSessionId,
+      text: inputValue.trim(),
+    };
 
-    // optimistic UI
-    setMessages((prev) => ({
-      ...prev,
-      [selectedSessionId]: [
-        ...(prev[selectedSessionId] ?? []),
-        {
-          id: tempId,
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify(payload));
+    } else {
+      await fetch("/api/messages", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
           sessionId: selectedSessionId,
-          text,
-          senderId: session?.user?.id,
-          createdAt: new Date().toISOString(),
-          pending: true,
-        },
-      ],
-    }));
-
-    wsRef.current?.send(
-      JSON.stringify({
-        type: "message",
-        sessionId: selectedSessionId,
-        text,
-      })
-    );
+          text: inputValue.trim(),
+        }),
+      });
+    }
 
     setInputValue("");
   };
-
-  /* ================= UI ================= */
 
   return (
     <div className="h-screen flex bg-background">
       <button
         className="md:hidden fixed top-3 left-4 z-50"
-        onClick={() => setShowMobileMenu((v) => !v)}
+        onClick={() => setShowMobileMenu(!showMobileMenu)}
       >
         {showMobileMenu ? <X /> : <Menu />}
       </button>
 
-      <div className={`w-72 border-r ${showMobileMenu ? "block" : "hidden md:block"}`}>
+      <div
+        className={`w-72 border-r ${
+          showMobileMenu ? "block" : "hidden md:block"
+        }`}
+      >
         <UserList
           sessions={sessions}
           users={users}
