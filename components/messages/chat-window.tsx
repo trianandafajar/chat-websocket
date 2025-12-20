@@ -2,6 +2,7 @@
 
 import { LogOutIcon } from "lucide-react"
 import { useEffect, useRef } from "react"
+import { signOut } from 'next-auth/react'
 
 interface Message {
   id: string
@@ -34,7 +35,10 @@ interface ChatWindowProps {
 }
 
 const handleLogout = () => {
-  window.location.reload()
+  signOut({
+    redirect: true,
+    callbackUrl : "/"
+  })
 }
 
 export function ChatWindow({
@@ -128,12 +132,12 @@ export function ChatWindow({
                 <div
                   className={`max-w-[75%] px-4 py-2 rounded-2xl text-sm ${
                     isMe
-                      ? "bg-primary text-primary-foreground rounded-br-sm"
+                      ? "bg-accent text-accent-foreground rounded-br-sm"
                       : "bg-muted text-foreground rounded-bl-sm"
                   }`}
                 >
                   <p>{message.text}</p>
-                  <p className="mt-1 text-[10px] opacity-60 text-right">
+                  <p className="mt-1 text-[10px] opacity-80 text-right">
                     {new Date(message.createdAt).toLocaleTimeString("id-ID", {
                       hour: "2-digit",
                       minute: "2-digit",

@@ -34,7 +34,7 @@ export default function RegisterPage() {
       redirect: false,
     });
 
-    router.push("/dashboard");
+    router.push("/");
   }
 
   return (
@@ -158,13 +158,13 @@ export default function RegisterPage() {
           </div>
 
           {/* Google */}
-          <button
+          {/* <button
             onClick={() => signIn("google")}
             className="flex items-center gap-2 w-full justify-center py-2 border border-border rounded-md"
           >
             <img src="/svg/google.svg" className="w-5 h-5" />
             <span>Google</span>
-          </button>
+          </button> */}
         </div>
 
         {/* Bottom text */}

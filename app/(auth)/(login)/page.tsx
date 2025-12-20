@@ -47,6 +47,7 @@ export default function LoginPage() {
                 id="email"
                 name="email"
                 type="email"
+                defaultValue="user@gmail.com"
                 required
                 placeholder="you@example.com"
                 className="w-full pl-10 pr-4 py-2 sm:py-2.5 bg-input text-sm sm:text-base 
@@ -70,6 +71,7 @@ export default function LoginPage() {
 
               <input
                 id="password"
+                defaultValue="password"
                 name="password"
                 type={showPassword ? "text" : "password"}
                 required
@@ -98,6 +100,7 @@ export default function LoginPage() {
           <div className="flex items-center justify-between">
             <label className="flex items-center gap-2 cursor-pointer">
               <input
+                defaultValue="true"
                 id="remember"
                 type="checkbox"
                 className="w-4 h-4 rounded border-border bg-input accent-primary"
@@ -131,15 +134,15 @@ export default function LoginPage() {
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-border"></div>
             </div>
-            <div className="relative flex justify-center text-xs sm:text-sm">
+            {/* <div className="relative flex justify-center text-xs sm:text-sm">
               <span className="px-2 bg-card text-muted-foreground">
                 Or continue with
               </span>
-            </div>
+            </div> */}
           </div>
 
           {/* Google */}
-          <button
+          {/* <button
             type="button"
             onClick={() => signIn("google", { callbackUrl: "/messages" })}
             className="flex items-center gap-2 w-full cursor-pointer justify-center py-2 sm:py-2.5
@@ -152,7 +155,7 @@ export default function LoginPage() {
               className="w-4 h-4 sm:w-5 sm:h-5"
             />
             <span>Google</span>
-          </button>
+          </button> */}
         </form>
 
         {/* Bottom text */}

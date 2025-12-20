@@ -1,38 +1,38 @@
-"use client"
+"use client";
 
-import { useState, useMemo } from "react"
-import { Search, Plus } from "lucide-react"
+import { useState, useMemo } from "react";
+import { Search, Plus } from "lucide-react";
 
 interface Participant {
-  id: string
-  name?: string | null
-  picture?: string | null
-  isOnline?: boolean
+  id: string;
+  name?: string | null;
+  picture?: string | null;
+  isOnline?: boolean;
 }
 
 interface SessionItem {
-  id: string
-  title?: string | null
-  isGroup?: boolean
-  lastMessage?: string | null
-  lastMessageAt?: string | null
-  participants?: Participant[]
+  id: string;
+  title?: string | null;
+  isGroup?: boolean;
+  lastMessage?: string | null;
+  lastMessageAt?: string | null;
+  participants?: Participant[];
 }
 
 interface User {
-  id: string
-  name?: string | null
-  picture?: string | null
-  isOnline?: boolean
+  id: string;
+  name?: string | null;
+  picture?: string | null;
+  isOnline?: boolean;
 }
 
 interface UserListProps {
-  sessions: SessionItem[]
-  users: User[]
-  selectedSessionId: string | null
-  onSelectSession: (sessionId: string) => void
-  onStartChat: (userId: string) => void
-  collapsed?: boolean
+  sessions: SessionItem[];
+  users: User[];
+  selectedSessionId: string | null;
+  onSelectSession: (sessionId: string) => void;
+  onStartChat: (userId: string) => void;
+  collapsed?: boolean;
 }
 
 export function UserList({
@@ -43,41 +43,38 @@ export function UserList({
   onStartChat,
   collapsed,
 }: UserListProps) {
-  const [search, setSearch] = useState("")
-  const [showUsers, setShowUsers] = useState(false)
+  const [search, setSearch] = useState("");
+  const [showUsers, setShowUsers] = useState(false);
 
   const filteredSessions = useMemo(() => {
-    const q = search.toLowerCase().trim()
-    if (!q) return sessions
+    const q = search.toLowerCase().trim();
+    if (!q) return sessions;
 
     return sessions.filter((s) => {
-      const title = s.title?.toLowerCase() ?? ""
-      const lastMessage = s.lastMessage?.toLowerCase() ?? ""
+      const title = s.title?.toLowerCase() ?? "";
+      const lastMessage = s.lastMessage?.toLowerCase() ?? "";
       const participantNames =
-        s.participants?.map((p) => p.name?.toLowerCase()).join(" ") ?? ""
+        s.participants?.map((p) => p.name?.toLowerCase()).join(" ") ?? "";
 
       return (
         title.includes(q) ||
         lastMessage.includes(q) ||
         participantNames.includes(q)
-      )
-    })
-  }, [search, sessions])
+      );
+    });
+  }, [search, sessions]);
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-sidebar">
-
       {/* Header */}
       {!collapsed && (
-        <div className="p-3 border-b border-sidebar-border flex gap-2">
-          <button
-            onClick={() => setShowUsers(!showUsers)}
-            className="flex items-center gap-2 px-3 py-2 bg-primary text-primary-foreground rounded-md text-sm"
-          >
-            <Plus size={16} />
-            New Chat
-          </button>
-        </div>
+        <button
+          onClick={() => setShowUsers(!showUsers)}
+          className="fixed bottom-5 left-5 z-50 w-14 h-14 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition"
+          aria-label="New Chat"
+        >
+          <Plus size={24} />
+        </button>
       )}
 
       {/* Search */}
@@ -107,8 +104,8 @@ export function UserList({
               <button
                 key={user.id}
                 onClick={() => {
-                  onStartChat(user.id)
-                  setShowUsers(false)
+                  onStartChat(user.id);
+                  setShowUsers(false);
                 }}
                 className="w-full px-4 py-2 text-left hover:bg-sidebar-accent text-sm flex items-center justify-between"
               >
@@ -132,27 +129,29 @@ export function UserList({
           </div>
         ) : (
           filteredSessions.map((session) => {
-            const active = selectedSessionId === session.id
+            const active = selectedSessionId === session.id;
 
             const displayName = session.isGroup
               ? session.title ?? "Group Chat"
-              : session.participants?.[0]?.name ?? "Unknown User"
+              : session.participants?.[0]?.name ?? "Unknown User";
 
             const avatar = session.isGroup
               ? "👥"
-              : session.participants?.[0]?.name?.[0]?.toUpperCase() ?? "?"
+              : session.participants?.[0]?.name?.[0]?.toUpperCase() ?? "?";
 
             const online =
-              !session.isGroup && session.participants?.[0]?.isOnline
+              !session.isGroup && session.participants?.[0]?.isOnline;
 
             return (
               <button
                 key={session.id}
                 onClick={() => onSelectSession(session.id)}
-                className={`w-full px-4 py-3 flex items-center gap-3 border-b border-sidebar-border
-                  ${active
-                    ? "bg-primary text-primary-foreground"
-                    : "hover:bg-sidebar-accent"}
+                className={`w-full px-4 py-3 justify-start flex items-center gap-3 border-b border-sidebar-border
+                  ${
+                    active
+                      ? "bg-accent text-accent-foreground"
+                      : "hover:bg-sidebar-accent"
+                  }
                 `}
               >
                 <div className="w-9 h-9 rounded-full flex items-center justify-center bg-card border">
@@ -161,10 +160,10 @@ export function UserList({
 
                 {!collapsed && (
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm truncate">
+                    <p className="font-semibold text-sm truncate text-start">
                       {displayName}
                     </p>
-                    <p className="text-xs truncate opacity-70">
+                    <p className="text-xs truncate opacity-70 text-start">
                       {session.lastMessage ?? "No messages yet"}
                     </p>
                   </div>
@@ -178,10 +177,10 @@ export function UserList({
                   />
                 )}
               </button>
-            )
+            );
           })
         )}
       </div>
     </div>
-  )
+  );
 }
