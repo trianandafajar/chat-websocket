@@ -3,16 +3,16 @@ import { prisma } from "@/lib/prisma";
 import { getToken } from "next-auth/jwt";
 
 export async function POST(req: NextRequest) {
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
-  if (!token?.id) return new Response("Unauthorized", { status: 401 });
+//   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+//   if (!token?.id) return new Response("Unauthorized", { status: 401 });
 
   const body = await req.json();
-  const { sessionId, text } = body;
+  const { sessionId, text, userId } = body;
 
   const msg = await prisma.message.create({
     data: {
       sessionId,
-      senderId: String(token.id),
+      senderId: userId,
       text,
     },
   });

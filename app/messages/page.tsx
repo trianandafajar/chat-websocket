@@ -111,17 +111,8 @@ export default function ChatApp() {
         setWsAlive(true);
         lastPongRef.current = Date.now();
 
-        /**
-         * 🔐 AUTH KE WEBSOCKET (WAJIB)
-         */
-        ws.send(
-          JSON.stringify({
-            type: "auth",
-            userId: session.user.id,
-          })
-        );
-
-
+        // Send auth
+        ws.send(JSON.stringify({ type: "auth", userId: session.user.id }));
 
         /**
          * ❤️ HEARTBEAT
@@ -173,6 +164,11 @@ export default function ChatApp() {
 
           if (data.type === "presence") {
             console.log("👤 presence", data);
+            setUsers((prev) =>
+              prev.map((u) =>
+                u.id === data.userId ? { ...u, isOnline: data.online } : u
+              )
+            );
           }
         } catch (e) {
           console.error("WS message error", e);
@@ -239,6 +235,7 @@ export default function ChatApp() {
       type: "message",
       sessionId: selectedSessionId,
       text: inputValue.trim(),
+      userId: session?.user?.id,
     };
 
     if (wsRef.current?.readyState === WebSocket.OPEN) {
@@ -246,11 +243,11 @@ export default function ChatApp() {
     } else {
       await fetch("/api/messages", {
         method: "POST",
-        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           sessionId: selectedSessionId,
           text: inputValue.trim(),
+          userId: session?.user?.id,
         }),
       });
     }

@@ -22,7 +22,25 @@ export async function GET() {
       },
     });
 
-    return NextResponse.json(sessions);
+    // Get participants for each session
+    const sessionsWithParticipants = await Promise.all(
+      sessions.map(async (s) => {
+        const participants = await prisma.user.findMany({
+          where: {
+            id: { in: s.participantIds },
+          },
+          select: {
+            id: true,
+            name: true,
+            picture: true,
+            isOnline: true,
+          },
+        });
+        return { ...s, participants };
+      })
+    );
+
+    return NextResponse.json(sessionsWithParticipants);
   } catch (err) {
     console.error("GET /api/sessions error:", err);
     return NextResponse.json([], { status: 500 });
