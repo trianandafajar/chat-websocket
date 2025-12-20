@@ -1,6 +1,7 @@
 "use client"
 
 import { LogOutIcon } from "lucide-react"
+import { useEffect, useRef } from "react"
 
 interface Message {
   id: string
@@ -28,6 +29,8 @@ interface ChatWindowProps {
   messages: Message[]
   sessions: Session[]
   currentUserId: string
+  typingUsers: string[]
+  users: Participant[]
 }
 
 const handleLogout = () => {
@@ -39,7 +42,11 @@ export function ChatWindow({
   messages,
   sessions,
   currentUserId,
+  typingUsers,
+  users,
 }: ChatWindowProps) {
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
   const session = sessions.find((s) => s.id === sessionId)
   if (!session) return null
 
@@ -57,7 +64,15 @@ export function ChatWindow({
     ? "👥"
     : otherUser?.name?.[0]?.toUpperCase() ?? "?"
 
-  const online = !isGroup && otherUser?.isOnline
+  const online = !isGroup && users.find((u) => u.id === otherUser?.id)?.isOnline
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, typingUsers]);
+
+  const typingNames = typingUsers
+    .map((userId) => session.participants?.find((p) => p.id === userId)?.name)
+    .filter(Boolean);
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
@@ -129,6 +144,26 @@ export function ChatWindow({
             )
           })
         )}
+
+        {/* Typing Indicator */}
+        {typingNames.length > 0 && (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-xs">
+              {avatar}
+            </div>
+            <div className="flex items-center gap-1">
+              <span>{typingNames.join(", ")} is typing</span>
+              <div className="flex gap-1">
+                <div className="w-1 h-1 bg-current rounded-full animate-bounce"></div>
+                <div className="w-1 h-1 bg-current rounded-full animate-bounce" style={{ animationDelay: "0.1s" }}></div>
+                <div className="w-1 h-1 bg-current rounded-full animate-bounce" style={{ animationDelay: "0.2s" }}></div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Invisible element for scrolling */}
+        <div ref={messagesEndRef} />
       </div>
     </div>
   )

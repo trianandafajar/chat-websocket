@@ -40,11 +40,13 @@ export default function ChatApp() {
   const [inputValue, setInputValue] = useState("");
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [wsAlive, setWsAlive] = useState(false);
+  const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
 
   const wsRef = useRef<WebSocket | null>(null);
   const lastPongRef = useRef<number>(Date.now());
   const reconnectTimerRef = useRef<number | null>(null);
   const pingTimerRef = useRef<number | null>(null);
+  const typingTimeoutRef = useRef<number | null>(null);
 
   const { data: session } = useSession();
 
@@ -67,11 +69,13 @@ export default function ChatApp() {
    * GET USERS
    */
   useEffect(() => {
+    if (!session?.user?.id) return;
+
     fetch("/api/users", { credentials: "include" })
       .then((r) => (r.ok ? r.json() : []))
       .then(setUsers)
       .catch(console.error);
-  }, []);
+  }, [session?.user?.id]);
 
   /**
    * GET MESSAGES
@@ -111,16 +115,18 @@ export default function ChatApp() {
         setWsAlive(true);
         lastPongRef.current = Date.now();
 
-        // Send auth
         ws.send(JSON.stringify({ type: "auth", userId: session.user.id }));
 
-        /**
-         * ❤️ HEARTBEAT
-         */
+        fetch("/api/users", { credentials: "include" })
+          .then((r) => (r.ok ? r.json() : []))
+          .then(setUsers)
+          .catch(console.error);
+
         if (pingTimerRef.current) clearInterval(pingTimerRef.current);
         pingTimerRef.current = window.setInterval(() => {
           if (wsRef.current?.readyState === WebSocket.OPEN) {
             wsRef.current.send(JSON.stringify({ type: "ping" }));
+            console.log("ping");
 
             if (Date.now() - lastPongRef.current > 60_000) {
               console.warn("⚠️ WS timeout, reconnecting...");
@@ -164,11 +170,34 @@ export default function ChatApp() {
 
           if (data.type === "presence") {
             console.log("👤 presence", data);
-            setUsers((prev) =>
-              prev.map((u) =>
+            setUsers((prev) => {
+              const updated = prev.map((u) =>
                 u.id === data.userId ? { ...u, isOnline: data.online } : u
-              )
+              );
+              console.log("Updated users:", updated);
+              return updated;
+            });
+            // Update sessions participants
+            setSessions((prev) =>
+              prev.map((s) => ({
+                ...s,
+                participants: s.participants?.map((p) =>
+                  p.id === data.userId ? { ...p, isOnline: data.online } : p
+                ),
+              }))
             );
+          }
+
+          if (data.type === "typing") {
+            setTypingUsers((prev) => new Set(prev).add(data.userId));
+          }
+
+          if (data.type === "stop-typing") {
+            setTypingUsers((prev) => {
+              const newSet = new Set(prev);
+              newSet.delete(data.userId);
+              return newSet;
+            });
           }
         } catch (e) {
           console.error("WS message error", e);
@@ -279,12 +308,6 @@ export default function ChatApp() {
       </div>
 
       <div className="flex-1 flex flex-col">
-        <div className="p-2 text-xs">
-          WebSocket:{" "}
-          <span className={wsAlive ? "text-green-500" : "text-red-500"}>
-            {wsAlive ? "connected" : "disconnected"}
-          </span>
-        </div>
 
         {selectedSessionId ? (
           <>
@@ -293,12 +316,37 @@ export default function ChatApp() {
               messages={messages[selectedSessionId] ?? []}
               sessions={sessions}
               currentUserId={session?.user?.id}
+              typingUsers={Array.from(typingUsers)}
+              users={users}
             />
 
             <div className="p-4 border-t flex gap-2">
               <input
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
+                onInput={() => {
+                  if (wsRef.current?.readyState === WebSocket.OPEN && selectedSessionId) {
+                    wsRef.current.send(JSON.stringify({
+                      type: "typing",
+                      sessionId: selectedSessionId,
+                      userId: session?.user?.id,
+                    }));
+
+                    // Clear previous timeout
+                    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+
+                    // Set timeout to stop typing
+                    typingTimeoutRef.current = window.setTimeout(() => {
+                      if (wsRef.current?.readyState === WebSocket.OPEN && selectedSessionId) {
+                        wsRef.current.send(JSON.stringify({
+                          type: "stop-typing",
+                          sessionId: selectedSessionId,
+                          userId: session?.user?.id,
+                        }));
+                      }
+                    }, 2000);
+                  }
+                }}
                 className="flex-1 border rounded px-3 py-2"
                 placeholder="Type message..."
                 onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}

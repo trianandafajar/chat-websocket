@@ -23,6 +23,7 @@ interface User {
   id: string
   name?: string | null
   picture?: string | null
+  isOnline?: boolean
 }
 
 interface UserListProps {
@@ -109,9 +110,14 @@ export function UserList({
                   onStartChat(user.id)
                   setShowUsers(false)
                 }}
-                className="w-full px-4 py-2 text-left hover:bg-sidebar-accent text-sm"
+                className="w-full px-4 py-2 text-left hover:bg-sidebar-accent text-sm flex items-center justify-between"
               >
-                {user.name ?? "Unknown User"}
+                <span>{user.name ?? "Unknown User"}</span>
+                <span
+                  className={`w-2 h-2 rounded-full ${
+                    user.isOnline ? "bg-green-500" : "bg-muted-foreground"
+                  }`}
+                />
               </button>
             ))
           )}
