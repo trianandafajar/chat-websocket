@@ -43,6 +43,7 @@ export default function ChatApp() {
   const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
 
   const wsRef = useRef<WebSocket | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
   const lastPongRef = useRef<number>(Date.now());
   const reconnectTimerRef = useRef<number | null>(null);
   const pingTimerRef = useRef<number | null>(null);
@@ -76,6 +77,25 @@ export default function ChatApp() {
       .then(setUsers)
       .catch(console.error);
   }, [session?.user?.id]);
+
+  // Close mobile menu when clicking/touching outside the menu panel
+  useEffect(() => {
+    function handleOutside(e: MouseEvent | TouchEvent) {
+      if (!showMobileMenu) return;
+      const target = (e as MouseEvent).target as Node | null;
+      if (menuRef.current && target && !menuRef.current.contains(target)) {
+        setShowMobileMenu(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleOutside);
+    document.addEventListener("touchstart", handleOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleOutside);
+      document.removeEventListener("touchstart", handleOutside);
+    };
+  }, [showMobileMenu]);
 
   /**
    * GET MESSAGES
@@ -252,6 +272,8 @@ export default function ChatApp() {
     );
 
     setSelectedSessionId(newSession.id);
+    // close mobile menu after starting chat
+    setShowMobileMenu(false);
   };
 
   /**
@@ -294,16 +316,26 @@ export default function ChatApp() {
       </button>
 
       <div
-        className={`w-72 border-r ${
-          showMobileMenu ? "block" : "hidden md:block"
+        ref={menuRef}
+        className={`w-72 border-r md:relative ${
+          showMobileMenu
+            ? "block fixed left-0 top-0 h-full z-50 bg-card/90 backdrop-blur-md"
+            : "hidden md:block"
         }`}
+        style={showMobileMenu ? { width: "18rem" } : undefined}
       >
         <UserList
           sessions={sessions}
           users={users}
           selectedSessionId={selectedSessionId}
-          onSelectSession={setSelectedSessionId}
-          onStartChat={startChat}
+          onSelectSession={(id) => {
+            setSelectedSessionId(id);
+            setShowMobileMenu(false);
+          }}
+          onStartChat={async (userId) => {
+            await startChat(userId);
+            setShowMobileMenu(false);
+          }}
         />
       </div>
 
@@ -320,7 +352,7 @@ export default function ChatApp() {
               users={users}
             />
 
-            <div className="p-4 border-t flex gap-2">
+            <div className="p-4 border-t flex gap-2 sticky bottom-0 bg-background/80 backdrop-blur-sm">
               <input
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
@@ -361,7 +393,7 @@ export default function ChatApp() {
           </>
         ) : (
           <div className="flex-1 flex items-center justify-center text-muted-foreground">
-            Pilih user untuk mulai chat
+            Select User to Start Chating 
           </div>
         )}
       </div>
