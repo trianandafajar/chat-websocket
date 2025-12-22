@@ -45,7 +45,11 @@ export default function RegisterPage() {
             Create Account
           </h2>
 
-          {error && <p className="text-red-500 text-center text-sm">{error}</p>}
+          {error && (
+            <div className="text-sm text-red-500 bg-red-500/10 border border-red-500/20 px-3 py-2 rounded-md">
+              {error}
+            </div>
+          )}
 
           <form action={handleSubmit} className="space-y-4">
             {/* Name */}
@@ -102,7 +106,7 @@ export default function RegisterPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                  className="absolute cursor-pointer right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
                 >
                   {showPassword ? <EyeOff /> : <Eye />}
                 </button>
@@ -129,7 +133,7 @@ export default function RegisterPage() {
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                  className="absolute cursor-pointer right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
                 >
                   {showConfirmPassword ? <EyeOff /> : <Eye />}
                 </button>
@@ -144,35 +148,14 @@ export default function RegisterPage() {
               {loading ? "Creating..." : "Create Account"}
             </button>
           </form>
-
-          {/* Divider */}
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-border"></div>
-            </div>
-            <div className="relative flex justify-center text-xs sm:text-sm">
-              <span className="px-2 bg-card text-muted-foreground">
-                Or continue with
-              </span>
-            </div>
-          </div>
-
-          {/* Google */}
-          {/* <button
-            onClick={() => signIn("google")}
-            className="flex items-center gap-2 w-full justify-center py-2 border border-border rounded-md"
-          >
-            <img src="/svg/google.svg" className="w-5 h-5" />
-            <span>Google</span>
-          </button> */}
         </div>
 
         {/* Bottom text */}
-        <p className="text-center text-xs text-muted-foreground mt-4">
+        <p className="text-center text-sm text-muted-foreground mt-4">
           Already have an account?{" "}
           <button
-            onClick={() => router.push("/login")}
-            className="text-primary underline"
+            onClick={() => router.push("/")}
+            className="text-primary underline cursor-pointer font-semibold"
           >
             Sign in
           </button>
