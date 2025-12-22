@@ -10,14 +10,16 @@ interface Participant {
   isOnline?: boolean;
 }
 
-interface SessionItem {
+type Session = {
   id: string;
-  title?: string | null;
   isGroup?: boolean;
+  title?: string | null;
   lastMessage?: string | null;
   lastMessageAt?: string | null;
-  participants?: Participant[];
-}
+  participants?: {
+    user: User;
+  }[];
+};
 
 interface User {
   id: string;
@@ -27,7 +29,7 @@ interface User {
 }
 
 interface UserListProps {
-  sessions: SessionItem[];
+  sessions: Session[];
   users: User[];
   selectedSessionId: string | null;
   onSelectSession: (sessionId: string) => void;
@@ -145,8 +147,13 @@ export function UserList({
             return (
               <button
                 key={session.id}
-                onClick={() => onSelectSession(session.id)}
-                className={`w-full px-4 py-3 justify-start flex items-center gap-3 border-b border-sidebar-border
+                onClick={() => {
+                  console.log(session.id)
+                  
+                  onSelectSession(
+                  session.id
+                )}}
+                className={`w-full z-[999] px-4 py-3 justify-start flex items-center gap-3 border-b border-sidebar-border
                   ${
                     active
                       ? "bg-accent text-accent-foreground"

@@ -88,7 +88,7 @@ export default function ChatApp() {
       }
     }
 
-    document.addEventListener("mousedown", handleOutside);
+    document.addEventListener("click", handleOutside);
     document.addEventListener("touchstart", handleOutside);
 
     return () => {
@@ -309,7 +309,7 @@ export default function ChatApp() {
   return (
     <div className="h-screen flex bg-background">
       <button
-        className="md:hidden fixed top-3 left-4 z-50"
+        className="md:hidden fixed top-3 left-4 z-40"
         onClick={() => setShowMobileMenu(!showMobileMenu)}
       >
         {showMobileMenu ? <X /> : <Menu />}
@@ -317,19 +317,34 @@ export default function ChatApp() {
 
       <div
         ref={menuRef}
-        className={`w-72 border-r md:relative ${
-          showMobileMenu
-            ? "block fixed left-0 top-0 h-full z-50 bg-card/90 backdrop-blur-md"
-            : "hidden md:block"
-        }`}
-        style={showMobileMenu ? { width: "18rem" } : undefined}
+        className={`w-72 border-r bg-card/90 backdrop-blur-md fixed md:relative top-0 h-full z-50 transition-all duration-300 ease-out md:translate-x-0 md:opacity-100
+          ${showMobileMenu
+            ? "translate-x-0 opacity-100 w-2xs"
+            : "-translate-x-full opacity-0"
+          }
+        `}
       >
+        {showMobileMenu && (
+          <div className="md:hidden flex items-center justify-between px-4 py-3 border-b">
+            <span className="font-semibold text-sm">Messages</span>
+
+            <button
+              onClick={() => setShowMobileMenu(false)}
+              className="p-2 rounded-md hover:bg-muted"
+              aria-label="Close menu"
+            >
+              ✕
+            </button>
+          </div>
+        )}
         <UserList
           sessions={sessions}
           users={users}
           selectedSessionId={selectedSessionId}
           onSelectSession={(id) => {
             setSelectedSessionId(id);
+            console.log('id', id);
+            
             setShowMobileMenu(false);
           }}
           onStartChat={async (userId) => {
@@ -363,8 +378,6 @@ export default function ChatApp() {
                       sessionId: selectedSessionId,
                       userId: session?.user?.id,
                     }));
-
-                    // Clear previous timeout
                     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
 
                     // Set timeout to stop typing
