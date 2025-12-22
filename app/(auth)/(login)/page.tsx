@@ -6,20 +6,35 @@ import { signIn } from "next-auth/react";
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleCredentialsLogin = async (e) => {
+  const handleCredentialsLogin = async (
+    e: React.FormEvent<HTMLFormElement>
+  ) => {
     e.preventDefault();
+    setError(null); 
 
     const formData = new FormData(e.currentTarget);
-    const email = formData.get("email");
-    const password = formData.get("password");
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
 
-    await signIn("credentials", {
+    const res = await signIn("credentials", {
       email,
       password,
-      redirect: true,
+      redirect: false, 
       callbackUrl: "/messages",
     });
+
+    if (res?.error) {
+      setError("Email or password is incorrect.");
+      return;
+    }
+
+    console.log(res);
+
+    if (res?.ok) {
+      window.location.href = "/messages";
+    }
   };
 
   return (
@@ -33,7 +48,12 @@ export default function LoginPage() {
             Login
           </h2>
 
-          {/* Email */}
+          {error && (
+            <div className="text-sm text-red-500 bg-red-500/10 border border-red-500/20 px-3 py-2 rounded-md">
+              {error}
+            </div>
+          )}
+
           <div className="space-y-1.5 sm:space-y-2">
             <label
               htmlFor="email"
@@ -128,37 +148,8 @@ export default function LoginPage() {
           >
             Sign In
           </button>
-
-          {/* Divider */}
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-border"></div>
-            </div>
-            {/* <div className="relative flex justify-center text-xs sm:text-sm">
-              <span className="px-2 bg-card text-muted-foreground">
-                Or continue with
-              </span>
-            </div> */}
-          </div>
-
-          {/* Google */}
-          {/* <button
-            type="button"
-            onClick={() => signIn("google", { callbackUrl: "/messages" })}
-            className="flex items-center gap-2 w-full cursor-pointer justify-center py-2 sm:py-2.5
-            border border-border rounded-md hover:bg-accent 
-            transition-colors text-foreground text-sm sm:text-base"
-          >
-            <img
-              src="/svg/google.svg"
-              alt="Google"
-              className="w-4 h-4 sm:w-5 sm:h-5"
-            />
-            <span>Google</span>
-          </button> */}
         </form>
 
-        {/* Bottom text */}
         <p className="text-center text-xs sm:text-sm text-muted-foreground mt-4 sm:mt-5">
           Don’t have an account?{" "}
           <button

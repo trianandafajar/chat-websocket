@@ -48,6 +48,8 @@ export default function ChatApp() {
   const reconnectTimerRef = useRef<number | null>(null);
   const pingTimerRef = useRef<number | null>(null);
   const typingTimeoutRef = useRef<number | null>(null);
+  const toggleRef = useRef<HTMLButtonElement | null>(null);
+
 
   const { data: session } = useSession();
 
@@ -80,20 +82,23 @@ export default function ChatApp() {
 
   // Close mobile menu when clicking/touching outside the menu panel
   useEffect(() => {
-    function handleOutside(e: MouseEvent | TouchEvent) {
+    function handleOutside(e: MouseEvent) {
       if (!showMobileMenu) return;
-      const target = (e as MouseEvent).target as Node | null;
-      if (menuRef.current && target && !menuRef.current.contains(target)) {
+
+      const target = e.target as Node;
+
+      // ignore klik hamburger
+      if (toggleRef.current?.contains(target)) return;
+
+      if (menuRef.current && !menuRef.current.contains(target)) {
         setShowMobileMenu(false);
       }
     }
 
     document.addEventListener("click", handleOutside);
-    document.addEventListener("touchstart", handleOutside);
 
     return () => {
-      document.removeEventListener("mousedown", handleOutside);
-      document.removeEventListener("touchstart", handleOutside);
+      document.removeEventListener("click", handleOutside);
     };
   }, [showMobileMenu]);
 
@@ -225,7 +230,7 @@ export default function ChatApp() {
       };
 
       ws.onclose = () => {
-        console.log("❌ WS closed");
+        console.log("WS closed");
         setWsAlive(false);
 
         if (reconnectTimerRef.current)
@@ -309,8 +314,9 @@ export default function ChatApp() {
   return (
     <div className="h-screen flex bg-background">
       <button
-        className="md:hidden fixed top-3 left-4 z-40"
-        onClick={() => setShowMobileMenu(!showMobileMenu)}
+        ref={toggleRef}
+        className="md:hidden fixed cursor-pointer top-4 left-4 z-40"
+        onClick={() => setShowMobileMenu((v) => !v)}
       >
         {showMobileMenu ? <X /> : <Menu />}
       </button>
@@ -380,7 +386,6 @@ export default function ChatApp() {
                     }));
                     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
 
-                    // Set timeout to stop typing
                     typingTimeoutRef.current = window.setTimeout(() => {
                       if (wsRef.current?.readyState === WebSocket.OPEN && selectedSessionId) {
                         wsRef.current.send(JSON.stringify({

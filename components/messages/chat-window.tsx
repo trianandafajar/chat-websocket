@@ -1,7 +1,7 @@
 "use client"
 
 import { LogOutIcon } from "lucide-react"
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import { signOut } from 'next-auth/react'
 
 interface Message {
@@ -34,13 +34,6 @@ interface ChatWindowProps {
   users: Participant[]
 }
 
-const handleLogout = () => {
-  signOut({
-    redirect: true,
-    callbackUrl : "/"
-  })
-}
-
 export function ChatWindow({
   sessionId,
   messages,
@@ -50,6 +43,14 @@ export function ChatWindow({
   users,
 }: ChatWindowProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [showLogoutModal, setShowLogoutModal] = useState(false)
+
+  const handleLogout = () => {
+    signOut({
+      redirect: true,
+      callbackUrl: "/",
+    })
+  }
 
   const session = sessions.find((s) => s.id === sessionId)
   if (!session) return null
@@ -98,7 +99,7 @@ export function ChatWindow({
         </div>
 
         <LogOutIcon
-          onClick={handleLogout}
+          onClick={() => setShowLogoutModal(true)}
           className="cursor-pointer text-muted-foreground hover:text-foreground"
           size={18}
         />
@@ -107,7 +108,7 @@ export function ChatWindow({
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4 space-y-3 pb-28">
         {messages.length === 0 ? (
-          <div className="h-full flex items-center justify-center text-muted-foreground">
+          <div className="h-[calc(100%-16px)] flex items-center justify-center text-muted-foreground">
             No messages yet
           </div>
         ) : (
@@ -168,6 +169,42 @@ export function ChatWindow({
 
         {/* Invisible element for scrolling */}
         <div ref={messagesEndRef} />
+
+        {showLogoutModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+            <div className="w-full max-w-sm rounded-xl bg-card p-5 border border-border shadow-lg">
+              <h3 className="text-lg font-semibold text-foreground">
+                Confirm Logout
+              </h3>
+
+              <p className="mt-2 text-sm text-muted-foreground">
+                Are you sure you want to log out? You will be signed out of your account.
+              </p>
+
+              <div className="mt-5 flex justify-end gap-3">
+                {/* Cancel */}
+                <button
+                  onClick={() => setShowLogoutModal(false)}
+                  className="cursor-pointer px-4 py-2 rounded-md text-sm 
+                  border border-border hover:bg-muted transition"
+                >
+                  Cancel
+                </button>
+
+                {/* Logout */}
+                <button
+                  onClick={handleLogout}
+                  className="cursor-pointer px-4 py-2 rounded-md text-sm 
+                  bg-red-600 text-white hover:bg-red-700 transition
+                  focus:outline-none focus:ring-2 focus:ring-red-500"
+                >
+                  Logout
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   )
