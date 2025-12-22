@@ -333,7 +333,7 @@ export default function ChatApp() {
               className="p-2 rounded-md hover:bg-muted"
               aria-label="Close menu"
             >
-              ✕
+              <X /> 
             </button>
           </div>
         )}
@@ -398,7 +398,7 @@ export default function ChatApp() {
               />
               <button
                 onClick={handleSendMessage}
-                className="bg-primary text-white px-4 rounded"
+                className="bg-primary text-white px-4 rounded cursor-pointer"
               >
                 <Send size={16} />
               </button>

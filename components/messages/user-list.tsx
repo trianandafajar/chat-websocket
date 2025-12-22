@@ -72,7 +72,7 @@ export function UserList({
       {!collapsed && (
         <button
           onClick={() => setShowUsers(!showUsers)}
-          className="fixed bottom-5 left-5 z-50 w-14 h-14 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition"
+          className="fixed bottom-5 left-5 z-50 w-14 h-14 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition cursor-pointer"
           aria-label="New Chat"
         >
           <Plus size={24} />
@@ -153,7 +153,7 @@ export function UserList({
                   onSelectSession(
                   session.id
                 )}}
-                className={`w-full z-[999] px-4 py-3 justify-start flex items-center gap-3 border-b border-sidebar-border
+                className={`w-full z-[999] px-4 py-3 justify-start flex items-center gap-3 border-b border-sidebar-border cursor-pointer
                   ${
                     active
                       ? "bg-accent text-accent-foreground"
