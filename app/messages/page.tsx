@@ -27,9 +27,7 @@ type Session = {
   title?: string | null;
   lastMessage?: string | null;
   lastMessageAt?: string | null;
-  participants?: {
-    user: User;
-  }[];
+  participants?: User[];
 };
 
 export default function ChatApp() {
@@ -266,19 +264,37 @@ export default function ChatApp() {
       body: JSON.stringify({ userId }),
     });
 
-    if (!res.ok) return;
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      throw new Error(text || "Failed to start session");
+    }
 
     const newSession: Session = await res.json();
 
-    setSessions((prev) =>
-      prev.some((s) => s.id === newSession.id)
-        ? prev
-        : [newSession, ...prev]
-    );
+    // ensure we have participant data; fetch detail if needed
+    let enriched = newSession as Session & { participants?: any };
+    if (!enriched.participants || enriched.participants.length === 0) {
+      const r2 = await fetch(`/api/sessions/${newSession.id}`, { credentials: 'include' });
+      if (r2.ok) {
+        const full = await r2.json();
+        enriched = { ...enriched, participants: full.participants };
+      }
+    }
 
-    setSelectedSessionId(newSession.id);
+    setSessions((prev) => {
+      // if session already exists, replace it with enriched version
+      const exists = prev.find((s) => s.id === enriched.id);
+      if (exists) {
+        return prev.map((s) => (s.id === enriched.id ? enriched : s));
+      }
+      return [enriched, ...prev];
+    });
+
+    setSelectedSessionId(enriched.id);
     // close mobile menu after starting chat
     setShowMobileMenu(false);
+
+    return enriched;
   };
 
   /**
@@ -353,6 +369,7 @@ export default function ChatApp() {
             
             setShowMobileMenu(false);
           }}
+          currentUserId={session?.user?.id}
           onStartChat={async (userId) => {
             await startChat(userId);
             setShowMobileMenu(false);

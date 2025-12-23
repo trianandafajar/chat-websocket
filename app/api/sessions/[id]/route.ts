@@ -10,5 +10,12 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   if (!session) {
     return new Response(JSON.stringify({ error: "Session not found" }), { status: 404 });
   }
-  return new Response(JSON.stringify(session), { status: 200 });
+
+  // load participant user data
+  const participants = await prisma.user.findMany({
+    where: { id: { in: session.participantIds } },
+    select: { id: true, name: true, picture: true, isOnline: true },
+  });
+
+  return new Response(JSON.stringify({ ...session, participants }), { status: 200 });
 }

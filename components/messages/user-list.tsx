@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Search, Plus } from "lucide-react";
+import { Search, Plus, X } from "lucide-react";
 
 interface Participant {
   id: string;
@@ -16,9 +16,7 @@ type Session = {
   title?: string | null;
   lastMessage?: string | null;
   lastMessageAt?: string | null;
-  participants?: {
-    user: User;
-  }[];
+  participants?: Participant[];
 };
 
 interface User {
@@ -35,6 +33,7 @@ interface UserListProps {
   onSelectSession: (sessionId: string) => void;
   onStartChat: (userId: string) => void;
   collapsed?: boolean;
+  currentUserId?: string | null;
 }
 
 export function UserList({
@@ -44,9 +43,11 @@ export function UserList({
   onSelectSession,
   onStartChat,
   collapsed,
+  currentUserId,
 }: UserListProps) {
   const [search, setSearch] = useState("");
   const [showUsers, setShowUsers] = useState(false);
+  const [modalQuery, setModalQuery] = useState("");
 
   const filteredSessions = useMemo(() => {
     const q = search.toLowerCase().trim();
@@ -95,31 +96,76 @@ export function UserList({
       )}
 
       {/* USER PICKER */}
+      {/* Modal-based user picker for mobile/desktop */}
       {showUsers && !collapsed && (
-        <div className="border-b border-sidebar-border">
-          {users.length === 0 ? (
-            <p className="p-3 text-sm text-muted-foreground">
-              No users available
-            </p>
-          ) : (
-            users.map((user) => (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setShowUsers(false)}
+          />
+
+          <div className="relative w-[min(640px,95%)] bg-card rounded-lg shadow-lg overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b">
+              <h3 className="text-sm font-semibold">Start new chat</h3>
               <button
-                key={user.id}
-                onClick={() => {
-                  onStartChat(user.id);
-                  setShowUsers(false);
-                }}
-                className="w-full px-4 py-2 text-left hover:bg-sidebar-accent text-sm flex items-center justify-between"
+                className="p-1 rounded hover:bg-accent"
+                onClick={() => setShowUsers(false)}
+                aria-label="Close"
               >
-                <span>{user.name ?? "Unknown User"}</span>
-                <span
-                  className={`w-2 h-2 rounded-full ${
-                    user.isOnline ? "bg-green-500" : "bg-muted-foreground"
-                  }`}
-                />
+                <X />
               </button>
-            ))
-          )}
+            </div>
+
+            <div className="p-4 border-b">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <input
+                  value={modalQuery}
+                  onChange={(e) => setModalQuery(e.target.value)}
+                  placeholder="Search users..."
+                  className="w-full pl-9 pr-3 py-2 text-sm bg-input border rounded-md"
+                />
+              </div>
+            </div>
+
+            <div className="max-h-[60vh] overflow-y-auto">
+              {users.filter(u => (u.name ?? '').toLowerCase().includes(modalQuery.toLowerCase().trim())).length === 0 ? (
+                <p className="p-4 text-sm text-muted-foreground">No users found</p>
+              ) : (
+                users
+                  .filter((u) => (u.name ?? "").toLowerCase().includes(modalQuery.toLowerCase().trim()))
+                  .map((user) => (
+                    <div key={user.id} className="flex items-center justify-between px-4 py-3 hover:bg-sidebar-accent">
+                      <div className="flex items-center gap-3">
+                        <img src={user.picture ?? `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name ?? 'User')}`} alt={user.name ?? 'User'} className="w-8 h-8 rounded-full object-cover" />
+                        <div>
+                          <div className="font-semibold text-sm">{user.name ?? 'Unknown'}</div>
+                          <div className="text-xs text-muted-foreground">{user.isOnline ? 'Online' : 'Offline'}</div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <span className={`w-2 h-2 rounded-full ${user.isOnline ? 'bg-green-500' : 'bg-muted-foreground'}`} />
+                        <button
+                          className="text-sm bg-primary text-primary-foreground px-3 py-1 rounded"
+                          onClick={async () => {
+                            try {
+                              await onStartChat(user.id);
+                              setShowUsers(false);
+                            } catch (err) {
+                              console.error('Start chat error', err);
+                              alert('Gagal memulai chat. Cek console untuk detail.');
+                            }
+                          }}
+                        >
+                          Chat
+                        </button>
+                      </div>
+                    </div>
+                  ))
+              )}
+            </div>
+          </div>
         </div>
       )}
 
@@ -133,16 +179,20 @@ export function UserList({
           filteredSessions.map((session) => {
             const active = selectedSessionId === session.id;
 
+            // pick the other participant for one-to-one chats
+            const other = session.isGroup
+              ? null
+              : session.participants?.find((p) => p.id !== currentUserId) ?? session.participants?.[0];
+
             const displayName = session.isGroup
               ? session.title ?? "Group Chat"
-              : session.participants?.[0]?.name ?? "Unknown User";
+              : other?.name ?? "Unknown User";
 
             const avatar = session.isGroup
               ? "👥"
-              : session.participants?.[0]?.name?.[0]?.toUpperCase() ?? "?";
+              : other?.name?.[0]?.toUpperCase() ?? "?";
 
-            const online =
-              !session.isGroup && session.participants?.[0]?.isOnline;
+            const online = !session.isGroup && !!other?.isOnline;
 
             return (
               <button
