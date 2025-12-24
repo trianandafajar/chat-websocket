@@ -98,7 +98,7 @@ export function UserList({
       {/* USER PICKER */}
       {/* Modal-based user picker for mobile/desktop */}
       {showUsers && !collapsed && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div className="fixed w-[100vw] inset-0 z-50 flex items-center justify-center">
           <div
             className="absolute inset-0 bg-black/40"
             onClick={() => setShowUsers(false)}
@@ -108,7 +108,7 @@ export function UserList({
             <div className="flex items-center justify-between p-4 border-b">
               <h3 className="text-sm font-semibold">Start new chat</h3>
               <button
-                className="p-1 rounded hover:bg-accent"
+                className="p-1 rounded cursor-pointer hover:bg-accent"
                 onClick={() => setShowUsers(false)}
                 aria-label="Close"
               >
@@ -147,7 +147,7 @@ export function UserList({
                       <div className="flex items-center gap-3">
                         <span className={`w-2 h-2 rounded-full ${user.isOnline ? 'bg-green-500' : 'bg-muted-foreground'}`} />
                         <button
-                          className="text-sm bg-primary text-primary-foreground px-3 py-1 rounded"
+                          className="text-sm cursor-pointer hover:bg-green-600 bg-primary text-primary-foreground px-3 py-1 rounded"
                           onClick={async () => {
                             try {
                               await onStartChat(user.id);
