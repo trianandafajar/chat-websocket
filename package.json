@@ -5,9 +5,9 @@
   "private": true,
   "scripts": {
     "build": "next build",
-    "dev": "node server.mjs",
+    "dev": "cross-env PORT=3041 NEXTAUTH_URL=http://localhost:3041 node server.mjs",
     "lint": "eslint .",
-    "start": "cross-env NODE_ENV=production node server.mjs",
+    "start": "cross-env NODE_ENV=production PORT=3041 NEXTAUTH_URL=http://localhost:3041 node server.mjs",
     "prisma:seed": "npx prisma db seed",
     "prisma:start": "npx prisma generate && npx prisma db push"
     },
