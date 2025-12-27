@@ -8,10 +8,9 @@
     "dev": "node server.mjs",
     "lint": "eslint .",
     "start": "cross-env NODE_ENV=production node server.mjs",
-    "migrate:dev": "npx prisma generate && npx prisma migrate dev --name init",
-    "migrate:prod": "npx prisma migrate deploy",
-    "migrate:fresh": "npx prisma migrate reset --force"
-  },
+    "prisma:seed": "npx prisma db seed",
+    "prisma:start": "npx prisma generate && npx prisma db push"
+    },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
   },
