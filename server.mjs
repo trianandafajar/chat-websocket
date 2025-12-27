@@ -6,7 +6,7 @@ const dev = process.env.NODE_ENV !== "production";
 const app = next({ dev });
 const handle = app.getRequestHandler();
 
-const PORT = 3041;
+const PORT = 9898;
 
 // Ensure NextAuth uses the correct base URL for callbacks (used by signOut redirects)
 process.env.NEXTAUTH_URL = process.env.NEXTAUTH_URL || `http://localhost:${PORT}`;
