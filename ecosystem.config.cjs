@@ -6,8 +6,9 @@ module.exports = {
       exec_mode: "fork",
       env: {
         NODE_ENV: "production",
-        PORT: 3042,
-        NEXTAUTH_URL: "https://chat-app.trianandafajar.com"
+        PORT: 3041,
+        NEXTAUTH_URL: "https://chat-app.trianandafajar.com",
+        APP_URL: "https://chat-app.trianandafajar.com"
       }
     }
   ]
