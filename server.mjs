@@ -3,13 +3,13 @@ import next from "next";
 import { getOrCreateWSS } from "./lib/ws.js";
 
 const dev = process.env.NODE_ENV !== "production";
+const PORT = process.env.PORT || 3042;
+
+process.env.NEXTAUTH_URL =
+  process.env.NEXTAUTH_URL || `http://localhost:${PORT}`;
+
 const app = next({ dev });
 const handle = app.getRequestHandler();
-
-const PORT = 3042;
-
-// Ensure NextAuth uses the correct base URL for callbacks (used by signOut redirects)
-process.env.NEXTAUTH_URL = process.env.NEXTAUTH_URL || `http://localhost:${PORT}`;
 
 app.prepare().then(() => {
   const server = http.createServer((req, res) => {
