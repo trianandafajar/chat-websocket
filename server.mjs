@@ -3,7 +3,7 @@ import next from "next";
 import { getOrCreateWSS } from "./lib/ws.js";
 
 const dev = process.env.NODE_ENV !== "production";
-const PORT = process.env.PORT || 3042;
+const PORT = process.env.PORT || 3041;
 
 process.env.NEXTAUTH_URL =
   process.env.NEXTAUTH_URL || `http://localhost:${PORT}`;
@@ -16,7 +16,6 @@ app.prepare().then(() => {
     handle(req, res);
   });
 
-  // 🔥 INIT WEBSOCKET (SATU KALI)
   getOrCreateWSS(server);
 
   server.listen(PORT, () => {
