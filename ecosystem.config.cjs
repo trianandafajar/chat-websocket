@@ -1,14 +1,14 @@
 module.exports = {
   apps: [
     {
-      name: "chat-app",
+      name: "chat-app-ega",
       script: "server.mjs",
       exec_mode: "fork",
       env: {
         NODE_ENV: "production",
-        PORT: 3041,
-        NEXTAUTH_URL: "https://chat-app.trianandafajar.com",
-        APP_URL: "https://chat-app.trianandafajar.com"
+        PORT: 3042,
+        NEXTAUTH_URL: "https://chat-app.egadestaviano.my.id",
+        APP_URL: "https://chat-app.egadestaviano.my.id"
       }
     }
   ]
