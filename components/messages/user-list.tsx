@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Search, Plus, X } from "lucide-react";
+import { Inbox, Search, Plus, X } from "lucide-react";
 
 interface Participant {
   id: string;
@@ -36,6 +36,10 @@ interface UserListProps {
   currentUserId?: string | null;
 }
 
+function getInitial(name?: string | null) {
+  return name?.trim().charAt(0).toUpperCase() || "?";
+}
+
 export function UserList({
   sessions,
   users,
@@ -68,54 +72,52 @@ export function UserList({
   }, [search, sessions]);
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden bg-sidebar">
-      {/* Header */}
+    <div className="flex-1 flex flex-col overflow-hidden bg-card">
+      {/* New Chat Button */}
       {!collapsed && (
         <button
           onClick={() => setShowUsers(!showUsers)}
-          className="fixed bottom-5 left-5 z-50 w-14 h-14 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition cursor-pointer"
+          className="fixed bottom-6 left-6 z-50 w-14 h-14 rounded-full bg-primary hover:bg-accent text-primary-foreground flex items-center justify-center shadow-lg hover:scale-110 active:scale-95 transition cursor-pointer duration-200"
           aria-label="New Chat"
+          title="Start new chat"
         >
           <Plus size={24} />
         </button>
       )}
 
-      {/* Search */}
+      {/* Header */}
       {!collapsed && (
-        <div className="p-3 border-b border-sidebar-border bg-sidebar/60">
+        <div className="p-4 border-b border-border">
+          <h1 className="text-lg font-bold text-foreground mb-3">Messages</h1>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search conversations..."
-              className="w-full pl-9 pr-3 py-2 text-sm bg-input border border-sidebar-border rounded-md"
+              className="w-full pl-10 pr-4 py-2.5 text-sm bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
             />
           </div>
         </div>
       )}
 
-      {/* USER PICKER */}
-      {/* Modal-based user picker for mobile/desktop */}
+      {/* USER PICKER MODAL */}
       {showUsers && !collapsed && (
-        <div className="fixed w-[100vw] inset-0 z-50 flex items-center justify-center">
-          <div
-            className="absolute inset-0 bg-black/40"
-            onClick={() => setShowUsers(false)}
-          />
-
-          <div className="relative w-[min(640px,95%)] bg-card rounded-lg shadow-lg overflow-hidden">
-            <div className="flex items-center justify-between p-4 border-b">
-              <h3 className="text-sm font-semibold">Start new chat</h3>
+        <div className="fixed w-[100vw] inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="relative w-[min(500px,95vw)] bg-white rounded-2xl shadow-2xl overflow-hidden border border-border">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b">
+              <h3 className="text-lg font-semibold text-foreground">Start new chat</h3>
               <button
-                className="p-1 rounded cursor-pointer hover:bg-accent"
+                className="p-2 rounded-lg cursor-pointer hover:bg-muted transition"
                 onClick={() => setShowUsers(false)}
                 aria-label="Close"
               >
-                <X />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
+            {/* Search */}
             <div className="p-4 border-b">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -123,45 +125,61 @@ export function UserList({
                   value={modalQuery}
                   onChange={(e) => setModalQuery(e.target.value)}
                   placeholder="Search users..."
-                  className="w-full pl-9 pr-3 py-2 text-sm bg-input border rounded-md"
+                  className="w-full pl-10 pr-4 py-2.5 text-sm bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
                 />
               </div>
             </div>
 
+            {/* User List */}
             <div className="max-h-[60vh] overflow-y-auto">
               {users.filter(u => (u.name ?? '').toLowerCase().includes(modalQuery.toLowerCase().trim())).length === 0 ? (
-                <p className="p-4 text-sm text-muted-foreground">No users found</p>
+                <p className="p-8 text-sm text-muted-foreground text-center">No users found</p>
               ) : (
                 users
                   .filter((u) => (u.name ?? "").toLowerCase().includes(modalQuery.toLowerCase().trim()))
                   .map((user) => (
-                    <div key={user.id} className="flex items-center justify-between px-4 py-3 hover:bg-sidebar-accent">
-                      <div className="flex items-center gap-3">
-                        <img src={user.picture ?? `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name ?? 'User')}`} alt={user.name ?? 'User'} className="w-8 h-8 rounded-full object-cover" />
-                        <div>
-                          <div className="font-semibold text-sm">{user.name ?? 'Unknown'}</div>
-                          <div className="text-xs text-muted-foreground">{user.isOnline ? 'Online' : 'Offline'}</div>
+                    <button
+                      key={user.id}
+                      onClick={async () => {
+                        try {
+                          await onStartChat(user.id);
+                          setShowUsers(false);
+                        } catch (err) {
+                          console.error('Start chat error', err);
+                          alert('Failed to start chat. Check console for details.');
+                        }
+                      }}
+                      className="w-full flex items-center justify-between px-4 py-4 text-left hover:bg-card border-b border-border/30 transition cursor-pointer"
+                    >
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div
+                          aria-hidden="true"
+                          className="w-10 h-10 rounded-full bg-muted text-foreground border border-border flex items-center justify-center text-sm font-semibold shrink-0"
+                        >
+                          {getInitial(user.name)}
+                        </div>
+                        <div className="min-w-0 text-left">
+                          <div className="font-medium text-sm text-foreground truncate">{user.name ?? 'Unknown'}</div>
+                          <div className={`text-xs ${user.isOnline ? 'text-green-600' : 'text-muted-foreground'}`}>
+                            {user.isOnline ? '● Online' : 'Offline'}
+                          </div>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-3">
-                        <span className={`w-2 h-2 rounded-full ${user.isOnline ? 'bg-green-500' : 'bg-muted-foreground'}`} />
+                      <div className="flex items-center gap-3 ml-3">
+                        <span className={`w-2.5 h-2.5 rounded-full ${user.isOnline ? 'bg-green-500' : 'bg-muted-foreground'}`} />
                         <button
-                          className="text-sm cursor-pointer hover:bg-green-600 bg-primary text-primary-foreground px-3 py-1 rounded"
-                          onClick={async () => {
-                            try {
-                              await onStartChat(user.id);
-                              setShowUsers(false);
-                            } catch (err) {
-                              console.error('Start chat error', err);
-                              alert('Gagal memulai chat. Cek console untuk detail.');
-                            }
+                          className="text-sm font-medium cursor-pointer hover:bg-primary/90 bg-primary text-primary-foreground px-3.5 py-1.5 rounded-lg transition"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onStartChat(user.id);
+                            setShowUsers(false);
                           }}
                         >
                           Chat
                         </button>
                       </div>
-                    </div>
+                    </button>
                   ))
               )}
             </div>
@@ -169,11 +187,13 @@ export function UserList({
         </div>
       )}
 
-      {/* SESSION LIST */}
+      {/* SESSIONS LIST */}
       <div className="flex-1 overflow-y-auto">
         {filteredSessions.length === 0 ? (
-          <div className="p-4 text-sm text-muted-foreground text-center">
-            No conversations yet
+          <div className="p-6 text-sm text-muted-foreground text-center">
+            <Inbox className="mx-auto mb-2 h-8 w-8 text-muted-foreground" />
+            <p className="font-medium">No conversations yet</p>
+            <p className="text-xs mt-1">Click the + button to start chatting</p>
           </div>
         ) : (
           filteredSessions.map((session) => {
@@ -188,50 +208,47 @@ export function UserList({
               ? session.title ?? "Group Chat"
               : other?.name ?? "Unknown User";
 
-            const avatar = session.isGroup
-              ? "👥"
-              : other?.name?.[0]?.toUpperCase() ?? "?";
-
-            const online = !session.isGroup && !!other?.isOnline;
+            const avatarInitial = session.isGroup ? "G" : getInitial(other?.name);
+            const timeStr = session.lastMessageAt
+              ? new Date(session.lastMessageAt).toLocaleTimeString("id-ID", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })
+              : "";
 
             return (
               <button
                 key={session.id}
-                onClick={() => {
-                  console.log(session.id)
-                  
-                  onSelectSession(
-                  session.id
-                )}}
-                className={`w-full z-[999] px-4 py-3 justify-start flex items-center gap-3 border-b border-sidebar-border cursor-pointer
+                onClick={() => onSelectSession(session.id)}
+                className={`w-full px-4 py-3 text-left justify-start flex items-center gap-3 border-b border-border/30 cursor-pointer transition-colors duration-150
                   ${
                     active
-                      ? "bg-accent text-accent-foreground"
-                      : "hover:bg-sidebar-accent"
+                      ? "bg-primary/10 border-primary/30"
+                      : "hover:bg-muted/40"
                   }
                 `}
               >
-                <div className="w-9 h-9 rounded-full flex items-center justify-center bg-card border">
-                  {avatar}
+                <div
+                  aria-hidden="true"
+                  className="w-10 h-10 rounded-full flex items-center justify-center bg-muted text-foreground border border-border text-sm font-semibold shrink-0"
+                >
+                  {avatarInitial}
                 </div>
 
                 {!collapsed && (
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm truncate text-start">
-                      {displayName}
-                    </p>
-                    <p className="text-xs truncate opacity-70 text-start">
+                  <div className="flex-1 min-w-0 text-left">
+                    <div className="flex items-center justify-between gap-2 mb-0.5">
+                      <p className={`font-medium text-sm truncate ${active ? 'text-foreground font-semibold' : 'text-foreground'}`}>
+                        {displayName}
+                      </p>
+                      {timeStr && (
+                        <span className="text-xs text-muted-foreground shrink-0">{timeStr}</span>
+                      )}
+                    </div>
+                    <p className="text-xs truncate text-muted-foreground">
                       {session.lastMessage ?? "No messages yet"}
                     </p>
                   </div>
-                )}
-
-                {!session.isGroup && (
-                  <span
-                    className={`w-2 h-2 rounded-full ${
-                      online ? "bg-green-500" : "bg-muted-foreground"
-                    }`}
-                  />
                 )}
               </button>
             );
@@ -241,3 +258,4 @@ export function UserList({
     </div>
   );
 }
+

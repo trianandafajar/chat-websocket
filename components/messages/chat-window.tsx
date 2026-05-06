@@ -1,8 +1,8 @@
 "use client"
 
-import { LogOutIcon } from "lucide-react"
+import { Hand, LogOutIcon, Users } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
-import { signOut } from 'next-auth/react'
+import { signOut } from "next-auth/react"
 
 interface Message {
   id: string
@@ -42,7 +42,7 @@ export function ChatWindow({
   typingUsers,
   users,
 }: ChatWindowProps) {
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null)
   const [showLogoutModal, setShowLogoutModal] = useState(false)
 
   const handleLogout = () => {
@@ -66,50 +66,61 @@ export function ChatWindow({
     : otherUser?.name ?? "Unknown User"
 
   const avatar = isGroup
-    ? "👥"
+    ? <Users className="h-4 w-4" strokeWidth={1.75} />
     : otherUser?.name?.[0]?.toUpperCase() ?? "?"
 
   const online = !isGroup && users.find((u) => u.id === otherUser?.id)?.isOnline
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, typingUsers]);
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }, [messages, typingUsers])
 
   const typingNames = typingUsers
     .map((userId) => session.participants?.find((p) => p.id === userId)?.name)
-    .filter(Boolean);
+    .filter(Boolean)
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
-      {/* Header */}
-      <div className="px-4 md:px-6 pt-3 pb-3.5 border-b border-border bg-card/50 backdrop-blur-sm flex items-center justify-between">
+      <div className="px-4 md:px-6 py-4 border-b border-border bg-background flex items-center justify-between">
         <div className="max-sm:ml-14 flex items-center gap-3 min-w-0">
-          <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold">
-            {avatar}
-          </div>
-
           <div className="min-w-0">
-            <h2 className="font-semibold text-sm truncate">{title}</h2>
-            {!isGroup && (
-              <p className="text-xs text-muted-foreground">
-                {online ? "Active now" : "Offline"}
-              </p>
-            )}
+            <h2 className="text-[22px] font-semibold leading-none tracking-tight text-foreground truncate">
+              {title}
+            </h2>
+            <p className="font-mono text-[11px] text-muted-foreground">
+              {isGroup ? "4 people online" : online ? "Active now" : "Offline"}
+            </p>
           </div>
         </div>
 
-        <LogOutIcon
-          onClick={() => setShowLogoutModal(true)}
-          className="cursor-pointer text-muted-foreground hover:text-foreground"
-          size={18}
-        />
+        <div className="flex items-center gap-2">
+          {isGroup && (
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 font-mono text-[10.5px] uppercase tracking-[0.14em] text-primary">
+              <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+              Active
+            </span>
+          )}
+          <button
+            onClick={() => setShowLogoutModal(true)}
+            className="cursor-pointer text-muted-foreground hover:text-foreground transition p-2 rounded-lg hover:bg-muted"
+            title="Logout"
+          >
+            <LogOutIcon size={20} />
+          </button>
+        </div>
       </div>
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4 space-y-3 pb-28">
+      <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4 space-y-4 pb-28 bg-background">
         {messages.length === 0 ? (
-          <div className="h-[calc(100%-16px)] flex items-center justify-center text-muted-foreground">
-            No messages yet
+          <div className="h-full flex items-center justify-center text-muted-foreground">
+            <div className="text-center">
+              <Hand
+                className="mx-auto mb-3 h-12 w-12 text-muted-foreground"
+                strokeWidth={1.75}
+              />
+              <p className="font-medium">No messages yet</p>
+              <p className="text-sm mt-1">Start the conversation!</p>
+            </div>
           </div>
         ) : (
           messages.map((message) => {
@@ -118,27 +129,30 @@ export function ChatWindow({
             return (
               <div
                 key={message.id}
-                className={`flex items-end gap-2 ${
-                  isMe ? "justify-end" : "justify-start"
-                }`}
+                className={`flex items-end gap-2.5 ${isMe ? "justify-end" : "justify-start"}`}
               >
-                {/* Avatar kiri (lawan) */}
                 {!isMe && (
-                  <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-xs">
+                  <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-medium shrink-0 border border-border">
                     {avatar}
                   </div>
                 )}
 
-                {/* Bubble */}
-                <div
-                  className={`max-w-[75%] px-4 py-2 rounded-2xl text-sm ${
-                    isMe
-                      ? "bg-accent text-accent-foreground rounded-br-sm"
-                      : "bg-muted text-foreground rounded-bl-sm"
-                  }`}
-                >
-                  <p>{message.text}</p>
-                  <p className="mt-1 text-[10px] opacity-80 text-right">
+                <div className="max-w-[74%]">
+                  <div
+                    className={`rounded-xl px-4 py-2.5 text-sm leading-relaxed ${
+                      isMe
+                        ? "bg-primary/15 text-foreground ring-1 ring-primary/25"
+                        : "bg-muted/60 text-foreground"
+                    }`}
+                  >
+                    <p className="break-words">{message.text}</p>
+                  </div>
+                  <p
+                    className={`mt-1 font-mono text-[11px] ${
+                      isMe ? "text-right text-muted-foreground" : "text-muted-foreground"
+                    }`}
+                  >
+                    {isMe ? "you - " : ""}
                     {new Date(message.createdAt).toLocaleTimeString("id-ID", {
                       hour: "2-digit",
                       minute: "2-digit",
@@ -150,62 +164,47 @@ export function ChatWindow({
           })
         )}
 
-        {/* Typing Indicator */}
         {typingNames.length > 0 && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-xs">
-              {avatar}
-            </div>
-            <div className="flex items-center gap-1">
-              <span>{typingNames.join(", ")} is typing</span>
-              <div className="flex gap-1">
-                <div className="w-1 h-1 bg-current rounded-full animate-bounce"></div>
-                <div className="w-1 h-1 bg-current rounded-full animate-bounce" style={{ animationDelay: "0.1s" }}></div>
-                <div className="w-1 h-1 bg-current rounded-full animate-bounce" style={{ animationDelay: "0.2s" }}></div>
-              </div>
-            </div>
+          <div className="flex items-center gap-2 pt-2 font-mono text-[11px] text-muted-foreground">
+            <span className="flex gap-1">
+              <span className="typing-dot-fast" />
+              <span className="typing-dot-fast" style={{ animationDelay: "80ms" }} />
+              <span className="typing-dot-fast" style={{ animationDelay: "160ms" }} />
+            </span>
+            {typingNames.join(", ")} is typing...
           </div>
         )}
 
-        {/* Invisible element for scrolling */}
         <div ref={messagesEndRef} />
+      </div>
 
-        {showLogoutModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-            <div className="w-full max-w-sm rounded-xl bg-card p-5 border border-border shadow-lg">
-              <h3 className="text-lg font-semibold text-foreground">
-                Confirm Logout
-              </h3>
+      {showLogoutModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 border border-border shadow-2xl">
+            <h3 className="text-lg font-semibold text-foreground">Sign out?</h3>
 
-              <p className="mt-2 text-sm text-muted-foreground">
-                Are you sure you want to log out? You will be signed out of your account.
-              </p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              You will need to sign in again to access your messages.
+            </p>
 
-              <div className="mt-5 flex justify-end gap-3">
-                {/* Cancel */}
-                <button
-                  onClick={() => setShowLogoutModal(false)}
-                  className="cursor-pointer px-4 py-2 rounded-md text-sm 
-                  border border-border hover:bg-muted transition"
-                >
-                  Cancel
-                </button>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                onClick={() => setShowLogoutModal(false)}
+                className="cursor-pointer px-4 py-2.5 rounded-lg text-sm font-medium border border-border text-foreground hover:bg-muted transition duration-200"
+              >
+                Cancel
+              </button>
 
-                {/* Logout */}
-                <button
-                  onClick={handleLogout}
-                  className="cursor-pointer px-4 py-2 rounded-md text-sm 
-                  bg-red-600 text-white hover:bg-red-700 transition
-                  focus:outline-none focus:ring-2 focus:ring-red-500"
-                >
-                  Logout
-                </button>
-              </div>
+              <button
+                onClick={handleLogout}
+                className="cursor-pointer px-4 py-2.5 rounded-lg text-sm font-medium bg-red-600 text-white hover:bg-red-700 transition duration-200"
+              >
+                Sign out
+              </button>
             </div>
           </div>
-        )}
-
-      </div>
+        </div>
+      )}
     </div>
   )
 }

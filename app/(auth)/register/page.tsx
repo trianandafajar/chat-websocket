@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Mail, Lock, User, Eye, EyeOff } from "lucide-react";
+import { Mail, Lock, User, Eye, EyeOff, MessageCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { registerAction } from "@/app/actions/auth";
@@ -38,124 +38,128 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4 sm:p-6">
+    <div className="min-h-screen bg-gradient-to-br from-white to-blue-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        <div className="bg-card p-5 sm:p-6 space-y-5 sm:space-y-6 border border-border rounded-xl">
-          <h2 className="text-xl sm:text-2xl font-bold text-center border-b border-border pb-4 sm:pb-5 text-foreground">
-            Create Account
-          </h2>
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary mb-4 mx-auto">
+            <MessageCircle className="w-6 h-6 text-primary-foreground" />
+          </div>
+          <h1 className="text-3xl font-bold text-foreground mb-2">Get started</h1>
+          <p className="text-muted-foreground">Join the conversation in seconds</p>
+        </div>
 
+        {/* Form */}
+        <div className="bg-white p-8 space-y-6 rounded-2xl shadow-lg border border-border">
           {error && (
-            <div className="text-sm text-red-500 bg-red-500/10 border border-red-500/20 px-3 py-2 rounded-md">
+            <div className="text-sm text-red-600 bg-red-50 border border-red-200 px-4 py-3 rounded-lg">
               {error}
             </div>
           )}
 
-          <form action={handleSubmit} className="space-y-4">
-            {/* Name */}
-            <div className="space-y-1.5 sm:space-y-2">
-              <label className="block text-sm sm:text-base font-medium text-foreground">
+          <form action={handleSubmit} className="space-y-5">
+            {/* Full Name */}
+            <div className="space-y-2">
+              <label htmlFor="name" className="block text-sm font-semibold text-foreground">
                 Full Name
               </label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <input
+                  id="name"
                   name="name"
                   type="text"
                   required
-                  placeholder="Your name"
-                  className="w-full pl-10 pr-4 py-2 bg-input text-sm border border-border rounded-md"
+                  placeholder="Your full name"
+                  className="w-full pl-11 pr-4 py-3 bg-input text-sm text-foreground placeholder-muted-foreground border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
                 />
               </div>
             </div>
 
             {/* Email */}
-            <div className="space-y-1.5 sm:space-y-2">
-              <label className="block text-sm sm:text-base font-medium text-foreground">
-                Email Address
+            <div className="space-y-2">
+              <label htmlFor="email" className="block text-sm font-semibold text-foreground">
+                Email
               </label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <input
+                  id="email"
                   name="email"
                   type="email"
                   required
-                  placeholder="you@example.com"
-                  className="w-full pl-10 pr-4 py-2 bg-input text-sm border border-border rounded-md"
+                  placeholder="Enter your email"
+                  className="w-full pl-11 pr-4 py-3 bg-input text-sm text-foreground placeholder-muted-foreground border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
                 />
               </div>
             </div>
 
             {/* Password */}
-            <div className="space-y-1.5 sm:space-y-2">
-              <label className="block text-sm sm:text-base font-medium text-foreground">
+            <div className="space-y-2">
+              <label htmlFor="password" className="block text-sm font-semibold text-foreground">
                 Password
               </label>
-
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <input
+                  id="password"
                   name="password"
                   type={showPassword ? "text" : "password"}
                   required
-                  placeholder="••••••••"
-                  className="w-full pl-10 pr-11 py-2 bg-input text-sm border border-border rounded-md"
+                  placeholder="At least 8 characters"
+                  className="w-full pl-11 pr-11 py-3 bg-input text-sm text-foreground placeholder-muted-foreground border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
                 />
-
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute cursor-pointer right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                  className="absolute cursor-pointer right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition"
                 >
-                  {showPassword ? <EyeOff /> : <Eye />}
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
             </div>
 
             {/* Confirm Password */}
-            <div className="space-y-1.5 sm:space-y-2">
-              <label className="block text-sm sm:text-base font-medium text-foreground">
+            <div className="space-y-2">
+              <label htmlFor="confirm" className="block text-sm font-semibold text-foreground">
                 Confirm Password
               </label>
-
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <input
+                  id="confirm"
                   name="confirm"
                   type={showConfirmPassword ? "text" : "password"}
                   required
-                  placeholder="••••••••"
-                  className="w-full pl-10 pr-11 py-2 bg-input text-sm border border-border rounded-md"
+                  placeholder="Confirm your password"
+                  className="w-full pl-11 pr-11 py-3 bg-input text-sm text-foreground placeholder-muted-foreground border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
                 />
-
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute cursor-pointer right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                  className="absolute cursor-pointer right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition"
                 >
-                  {showConfirmPassword ? <EyeOff /> : <Eye />}
+                  {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
             </div>
 
-            {/* Submit */}
+            {/* Submit Button */}
             <button
               type="submit"
-              className="w-full bg-primary text-primary-foreground py-2 rounded-md font-semibold"
+              className="w-full bg-primary hover:bg-accent text-primary-foreground py-3 rounded-lg font-semibold transition-colors duration-200 cursor-pointer"
             >
-              {loading ? "Creating..." : "Create Account"}
+              {loading ? "Creating account..." : "Create account"}
             </button>
           </form>
         </div>
 
-        {/* Bottom text */}
-        <p className="text-center text-sm text-muted-foreground mt-4">
+        {/* Footer */}
+        <p className="text-center text-sm text-muted-foreground mt-6">
           Already have an account?{" "}
           <button
             onClick={() => router.push("/")}
-            className="text-primary underline cursor-pointer font-semibold"
+            className="text-primary font-semibold cursor-pointer hover:text-accent transition"
           >
             Sign in
           </button>

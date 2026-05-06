@@ -1,26 +1,32 @@
 "use client"
 
 import { useState } from "react"
-import { Mail } from "lucide-react"
+import { Mail, MessageCircle, ArrowLeft } from "lucide-react"
 
 export default function ForgotPasswordPage() {
   const [emailSent, setEmailSent] = useState(false)
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-white to-blue-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
 
-        <div className="bg-card p-6 space-y-6 border border-border rounded-lg">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary mb-4 mx-auto">
+            <MessageCircle className="w-6 h-6 text-primary-foreground" />
+          </div>
+          <h1 className="text-3xl font-bold text-foreground mb-2">Reset password</h1>
+          <p className="text-muted-foreground">We'll send you a link to get back in</p>
+        </div>
 
-          <h2 className="text-2xl font-bold text-center border-b border-border pb-5 text-foreground">
-            Forgot Password
-          </h2>
+        {/* Form */}
+        <div className="bg-white p-8 space-y-6 rounded-2xl shadow-lg border border-border">
 
           {!emailSent ? (
             <>
               {/* Email */}
               <div className="space-y-2">
-                <label htmlFor="email" className="block text-sm font-medium text-foreground">
+                <label htmlFor="email" className="block text-sm font-semibold text-foreground">
                   Email Address
                 </label>
                 <div className="relative">
@@ -28,10 +34,10 @@ export default function ForgotPasswordPage() {
                   <input
                     id="email"
                     type="email"
-                    placeholder="you@example.com"
-                    className="w-full pl-10 pr-4 py-2 bg-input text-sm text-foreground 
-                    placeholder-muted-foreground border border-border rounded-md
-                    focus:outline-none focus:ring-2 focus:ring-primary"
+                    placeholder="Enter your email"
+                    className="w-full pl-11 pr-4 py-3 bg-input text-sm text-foreground
+                    placeholder-muted-foreground border border-border rounded-lg
+                    focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
                   />
                 </div>
               </div>
@@ -39,10 +45,10 @@ export default function ForgotPasswordPage() {
               {/* Submit */}
               <button
                 onClick={() => setEmailSent(true)}
-                className="w-full cursor-pointer bg-primary hover:bg-primary/90 
-                text-primary-foreground font-semibold py-2 rounded-md transition-colors"
+                className="w-full cursor-pointer bg-primary hover:bg-accent
+                text-primary-foreground font-semibold py-3 rounded-lg transition-colors duration-200"
               >
-                Send Reset Link
+                Send reset link
               </button>
             </>
           ) : (
@@ -53,22 +59,24 @@ export default function ForgotPasswordPage() {
 
               <button
                 onClick={() => setEmailSent(false)}
-                className="text-primary hover:underline text-sm"
+                className="inline-flex items-center gap-2 text-primary hover:text-accent text-sm font-medium transition"
               >
-                Back
+                <ArrowLeft className="w-4 h-4" />
+                Try again
               </button>
             </div>
           )}
 
         </div>
 
-        <p className="text-center text-sm text-muted-foreground mt-5">
+        {/* Footer */}
+        <p className="text-center text-sm text-muted-foreground mt-6">
           Remember your password?{" "}
           <button
             onClick={() => (window.location.href = "/login")}
-            className="text-primary hover:underline font-medium"
+            className="text-primary font-semibold cursor-pointer hover:text-accent transition"
           >
-            Login
+            Sign in
           </button>
         </p>
 

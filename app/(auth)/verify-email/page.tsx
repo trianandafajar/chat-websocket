@@ -2,13 +2,13 @@
 
 import React from "react"
 import { useRouter } from "next/navigation"
-import { ShieldCheck } from "lucide-react"
+import { ShieldCheck, MessageCircle } from "lucide-react"
 
 const VerifyEmailPage: React.FC = () => {
   const router = useRouter()
 
   const handleBackToLogin = (): void => {
-    router.push("/auth/login")
+    router.push("/login")
   }
 
   const handleResendEmail = (): void => {
@@ -16,56 +16,63 @@ const VerifyEmailPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-white to-blue-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        <div className="bg-card p-6 space-y-6 border border-border rounded-lg text-center">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary mb-4 mx-auto">
+            <MessageCircle className="w-6 h-6 text-primary-foreground" />
+          </div>
+          <h1 className="text-3xl font-bold text-foreground mb-2">Verify email</h1>
+          <p className="text-muted-foreground">Check your inbox for the confirmation link</p>
+        </div>
+
+        {/* Content */}
+        <div className="bg-white p-8 space-y-6 rounded-2xl shadow-lg border border-border text-center">
           {/* Icon */}
           <div className="flex justify-center">
-            <ShieldCheck className="w-14 h-14 text-primary" />
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100">
+              <ShieldCheck className="w-8 h-8 text-primary" />
+            </div>
           </div>
-
-          {/* Title */}
-          <h2 className="text-2xl font-bold text-foreground">
-            Verify Your Email
-          </h2>
 
           {/* Description */}
           <p className="text-sm text-muted-foreground leading-relaxed">
-            We've sent a verification link to your email address.
+            We’ve sent a verification link to your email address.
             <br />
-            Please check your inbox and click the link to activate your account.
+            Click the link to activate your account and start chatting.
           </p>
 
           {/* Buttons */}
-          <div className="space-y-3">
+          <div className="space-y-3 pt-2">
             <button
               type="button"
               onClick={handleBackToLogin}
-              className="w-full cursor-pointer bg-primary hover:bg-primary/90 
-              text-primary-foreground font-semibold py-2 rounded-md transition-colors"
+              className="w-full cursor-pointer bg-primary hover:bg-accent
+              text-primary-foreground font-semibold py-3 rounded-lg transition-colors duration-200"
             >
-              Back to Login
+              Back to login
             </button>
 
             <button
               type="button"
               onClick={handleResendEmail}
-              className="w-full cursor-pointer border border-border hover:bg-accent 
-              text-foreground py-2 rounded-md transition-colors"
+              className="w-full cursor-pointer border border-border hover:bg-blue-50
+              text-foreground py-3 rounded-lg transition-colors duration-200 font-medium"
             >
-              Resend Verification Email
+              Resend link
             </button>
           </div>
         </div>
 
-        <p className="text-center text-sm text-muted-foreground mt-5">
-          Didn’t receive anything?
+        <p className="text-center text-sm text-muted-foreground mt-6">
+          Didn’t get the email?{" "}
           <button
             type="button"
             onClick={handleResendEmail}
-            className="text-primary hover:underline font-medium ml-1"
+            className="text-primary font-semibold cursor-pointer hover:text-accent transition"
           >
-            Try again
+            Check spam or resend
           </button>
         </p>
       </div>

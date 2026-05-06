@@ -390,7 +390,7 @@ export default function ChatApp() {
               users={users}
             />
 
-            <div className="p-4 border-t flex gap-2 sticky bottom-0 bg-background/80 backdrop-blur-sm">
+            <div className="p-4 border-t flex gap-3 sticky bottom-0 bg-background/80 backdrop-blur-sm">
               <input
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
@@ -414,21 +414,23 @@ export default function ChatApp() {
                     }, 2000);
                   }
                 }}
-                className="flex-1 border rounded px-3 py-2"
-                placeholder="Type message..."
+                className="flex-1 border border-border bg-input rounded-lg px-4 py-3 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
+                placeholder="Type your message..."
                 onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
               />
               <button
                 onClick={handleSendMessage}
-                className="bg-primary text-white px-4 rounded cursor-pointer"
+                className="bg-primary hover:bg-accent text-primary-foreground px-4 py-3 rounded-lg cursor-pointer transition-colors duration-200 flex items-center justify-center"
               >
-                <Send size={16} />
+                <Send size={18} />
               </button>
             </div>
           </>
         ) : (
-          <div className="flex-1 flex items-center justify-center text-muted-foreground">
-            Select User to Start Chating 
+          <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground gap-3">
+            <div className="text-5xl mb-2">💬</div>
+            <p className="text-lg font-semibold">Start a conversation</p>
+            <p className="text-sm max-w-xs text-center">Select a user from the left or click the + button to begin chatting</p>
           </div>
         )}
       </div>

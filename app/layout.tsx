@@ -9,8 +9,8 @@ const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Dark Chat - Messenger App",
-  description: "Modern dark mode chat application",
+  title: "Chat - Instant Messaging",
+  description: "Clean and simple chat application. Connect instantly.",
   generator: "v0.app",
   icons: {
     icon: [
@@ -37,7 +37,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en">
       <body className={`font-sans antialiased`}>
         <AuthProvider>
           {children}
