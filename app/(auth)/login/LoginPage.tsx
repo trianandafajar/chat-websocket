@@ -1,23 +1,23 @@
 "use client";
 
 import { useState } from "react";
-import { Mail, Lock, Eye, EyeOff, MessageCircle } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, MessageCircle, Loader2 } from "lucide-react";
 import { signIn } from "next-auth/react";
+
+const QUICK_ACCOUNTS = [
+  { name: "Alice", email: "alice@gmail.com", avatar: "/avatar1.jpg" },
+  { name: "Bob", email: "bob@gmail.com", avatar: "/avatar2.jpg" },
+  { name: "Carol", email: "carol@gmail.com", avatar: "/avatar3.jpg" },
+  { name: "Triananda", email: "user@gmail.com", avatar: null },
+];
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [quickLoading, setQuickLoading] = useState<string | null>(null);
 
-  const handleCredentialsLogin = async (
-    e: React.FormEvent<HTMLFormElement>
-  ) => {
-    e.preventDefault();
+  const doLogin = async (email: string, password: string) => {
     setError(null);
-
-    const formData = new FormData(e.currentTarget);
-    const email = formData.get("email") as string;
-    const password = formData.get("password") as string;
-
     const res = await signIn("credentials", {
       email,
       password,
@@ -27,12 +27,30 @@ export default function LoginPage() {
 
     if (res?.error) {
       setError("Email or password is incorrect.");
-      return;
+      return false;
     }
-
     if (res?.ok) {
       window.location.href = "/messages";
+      return true;
     }
+    return false;
+  };
+
+  const handleCredentialsLogin = async (
+    e: React.FormEvent<HTMLFormElement>
+  ) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
+    await doLogin(email, password);
+  };
+
+  const handleQuickLogin = async (email: string) => {
+    if (quickLoading) return;
+    setQuickLoading(email);
+    const ok = await doLogin(email, "password");
+    if (!ok) setQuickLoading(null);
   };
 
   return (
@@ -136,6 +154,55 @@ export default function LoginPage() {
             Sign in
           </button>
         </form>
+
+        {/* Quick Login (demo accounts) */}
+        <div className="mt-6">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="flex-1 h-px bg-border" />
+            <span className="text-xs uppercase tracking-wider text-muted-foreground font-medium">
+              Quick login
+            </span>
+            <div className="flex-1 h-px bg-border" />
+          </div>
+
+          <div className="grid grid-cols-4 gap-2">
+            {QUICK_ACCOUNTS.map((acc) => {
+              const loading = quickLoading === acc.email;
+              const initial = acc.name.charAt(0).toUpperCase();
+              return (
+                <button
+                  key={acc.email}
+                  type="button"
+                  onClick={() => handleQuickLogin(acc.email)}
+                  disabled={!!quickLoading}
+                  title={`Sign in as ${acc.name}`}
+                  className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-white border border-border hover:border-primary hover:bg-blue-50 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <div className="relative w-10 h-10 rounded-full overflow-hidden bg-muted flex items-center justify-center text-sm font-semibold text-foreground border border-border">
+                    {acc.avatar ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={acc.avatar}
+                        alt={acc.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      initial
+                    )}
+                    {loading && (
+                      <span className="absolute inset-0 flex items-center justify-center bg-black/40 text-white">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-xs font-medium text-foreground truncate max-w-full">
+                    {acc.name}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
         {/* Footer */}
         <p className="text-center text-sm text-muted-foreground mt-6">

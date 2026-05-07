@@ -109,7 +109,7 @@ export function ChatWindow({
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4 space-y-4 pb-28 bg-background">
+      <div className="flex-1 min-h-0 overflow-y-auto px-4 md:px-6 py-4 space-y-4 bg-background">
         {messages.length === 0 ? (
           <div className="h-full flex items-center justify-center text-muted-foreground">
             <div className="text-center">

@@ -54,19 +54,27 @@ export function UserList({
 
   const filteredSessions = useMemo(() => {
     const q = search.toLowerCase().trim();
-    if (!q) return sessions;
 
-    return sessions.filter((s) => {
-      const title = s.title?.toLowerCase() ?? "";
-      const lastMessage = s.lastMessage?.toLowerCase() ?? "";
-      const participantNames =
-        s.participants?.map((p) => p.name?.toLowerCase()).join(" ") ?? "";
+    const matched = q
+      ? sessions.filter((s) => {
+          const title = s.title?.toLowerCase() ?? "";
+          const lastMessage = s.lastMessage?.toLowerCase() ?? "";
+          const participantNames =
+            s.participants?.map((p) => p.name?.toLowerCase()).join(" ") ?? "";
 
-      return (
-        title.includes(q) ||
-        lastMessage.includes(q) ||
-        participantNames.includes(q)
-      );
+          return (
+            title.includes(q) ||
+            lastMessage.includes(q) ||
+            participantNames.includes(q)
+          );
+        })
+      : sessions;
+
+    // Sort: sessions with messages first (newest -> oldest), then no-message sessions.
+    return [...matched].sort((a, b) => {
+      const aTime = a.lastMessageAt ? new Date(a.lastMessageAt).getTime() : 0;
+      const bTime = b.lastMessageAt ? new Date(b.lastMessageAt).getTime() : 0;
+      return bTime - aTime;
     });
   }, [search, sessions]);
 
@@ -86,7 +94,7 @@ export function UserList({
 
       {/* Header */}
       {!collapsed && (
-        <div className="p-[calc(var(--spacing)*3.6)] border-b border-border">
+        <div className="p-[calc(var(--spacing)*4.3)] border-b border-border">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <input
@@ -184,7 +192,7 @@ export function UserList({
       )}
 
       {/* SESSIONS LIST */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto max-h-[calc(100vh-6rem)]">
         {filteredSessions.length === 0 ? (
           <div className="p-6 text-sm text-muted-foreground text-center">
             <Inbox className="mx-auto mb-2 h-8 w-8 text-muted-foreground" />

@@ -331,7 +331,7 @@ export default function ChatApp() {
 
   return (
     <MyProfileProvider>
-    <div className="h-screen flex bg-background">
+    <div className="h-screen flex bg-background overflow-hidden">
       <button
         ref={toggleRef}
         className="md:hidden fixed cursor-pointer top-4 left-4 z-40"
