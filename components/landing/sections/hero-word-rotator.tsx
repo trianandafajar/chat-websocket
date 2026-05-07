@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 const WORDS = [
   { text: "friends" },
@@ -9,25 +9,58 @@ const WORDS = [
 ];
 
 export function HeroWordRotator() {
-  const [index, setIndex] = useState(0);
+  const [position, setPosition] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(true);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
-      setIndex((prev) => (prev + 1) % WORDS.length);
+      setPosition((prev) => prev + 1);
     }, 1800);
 
     return () => window.clearInterval(timer);
   }, []);
 
-  const active = useMemo(() => WORDS[index], [index]);
+  useEffect(() => {
+    if (position !== WORDS.length) {
+      return;
+    }
+
+    const resetTimer = window.setTimeout(() => {
+      setIsTransitioning(false);
+      setPosition(0);
+
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => {
+          setIsTransitioning(true);
+        });
+      });
+    }, 500);
+
+    return () => window.clearTimeout(resetTimer);
+  }, [position]);
 
   return (
-    <span className="inline-flex items-baseline align-baseline">
+    <span className="relative inline-block h-[1em]  overflow-hidden whitespace-nowrap align-baseline leading-none -mb-2.5">
+      <span className="invisible block leading-none" aria-hidden="true">
+        friends
+      </span>
       <span
-        key={active.text}
-        className="inline-block leading-none text-foreground motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-1 motion-safe:duration-300"
+        className={[
+          "absolute left-0 top-0 block motion-reduce:transition-none",
+          isTransitioning
+            ? "transition-transform duration-500 ease-out"
+            : "transition-none",
+        ].join(" ")}
+        style={{ transform: `translateY(-${position}em)` }}
       >
-        {active.text}
+        {[...WORDS, WORDS[0]].map((word, wordIndex) => (
+          <span
+            key={`${word.text}-${wordIndex}`}
+            className="block h-[1em] whitespace-nowrap leading-none text-foreground"
+          >
+            {word.text}
+          </span>
+        ))}
       </span>
     </span>
   );

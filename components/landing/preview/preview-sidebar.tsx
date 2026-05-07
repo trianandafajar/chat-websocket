@@ -4,12 +4,11 @@ import { previewInitials } from "@/components/landing/preview/preview-utils";
 
 export function PreviewSidebar() {
   return (
-    <aside className="flex min-h-[460px] flex-col border-b border-border bg-card sm:border-r sm:border-b-0">
-      <div className="p-4 border-b border-border">
-        <h3 className="text-lg font-bold text-foreground mb-3">Messages</h3>
+    <aside className="flex min-h-[380px] flex-col border-b border-border bg-card sm:border-r sm:border-b-0">
+      <div className="border-b border-border p-3">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <div className="w-full pl-10 pr-4 py-2.5 text-sm bg-input border border-border rounded-lg text-muted-foreground">
+          <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+          <div className="w-full rounded-md border border-border bg-input py-2 pl-9 pr-3 text-xs text-muted-foreground">
             Search conversations...
           </div>
         </div>
@@ -19,24 +18,24 @@ export function PreviewSidebar() {
         {SESSIONS.map((session) => (
           <li key={session.id}>
             <div
-              className={`w-full px-4 py-3 text-left flex items-center gap-3 border-b border-border/30 ${
+              className={`w-full px-3 py-2.5 text-left flex items-center gap-2.5 border-b border-border/30 ${
                 session.active ? "bg-primary/10 border-primary/30" : ""
               }`}
             >
-              <div className="w-10 h-10 rounded-full flex items-center justify-center bg-muted text-foreground border border-border text-sm font-semibold shrink-0">
+              <div className="w-8 h-8 rounded-full flex items-center justify-center bg-muted text-foreground border border-border text-xs font-semibold shrink-0">
                 {previewInitials(session.name)}
               </div>
 
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-2 mb-0.5">
-                  <p className="font-medium text-sm truncate text-foreground">
+                  <p className="font-medium text-xs truncate text-foreground">
                     {session.name}
                   </p>
-                  <span className="text-xs text-muted-foreground shrink-0">
+                  <span className="text-[11px] text-muted-foreground shrink-0">
                     {session.time}
                   </span>
                 </div>
-                <p className="text-xs truncate text-muted-foreground">{session.message}</p>
+                <p className="text-[11px] truncate text-muted-foreground">{session.message}</p>
               </div>
             </div>
           </li>

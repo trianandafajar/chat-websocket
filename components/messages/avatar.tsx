@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useState } from "react";
 
 interface AvatarProps {
@@ -38,12 +39,15 @@ export function Avatar({ name, picture, size = 40, className = "" }: AvatarProps
       aria-label={name ?? "User"}
     >
       {showImage ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
+        <Image
+          key={picture}
           src={picture as string}
           alt={name ?? ""}
           className="w-full h-full object-cover"
           onError={() => setErrored(true)}
+          width={size}
+          height={size}
+          unoptimized
         />
       ) : (
         initial

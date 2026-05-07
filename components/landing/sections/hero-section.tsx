@@ -9,8 +9,10 @@ export function HeroSection() {
       <div className="mx-auto max-w-6xl px-6 py-10">
         <div className="grid gap-16 lg:grid-cols-2 lg:items-center lg:gap-12">
           <div>
-            <h1 className="max-w-3xl text-[44px] font-semibold leading-[1.05] tracking-[-0.025em] text-foreground sm:text-[64px] leading-none">
-              Talk with <HeroWordRotator />,
+            <h1 className="max-w-3xl text-[44px] font-semibold leading-none tracking-[-0.025em] text-foreground sm:text-[64px]">
+              <span className="whitespace-nowrap">
+                Talk with <HeroWordRotator />,
+              </span>
               <br />
               <span className="text-primary">without the noise.</span>
             </h1>
@@ -38,14 +40,14 @@ export function HeroSection() {
             </div>
           </div>
 
-          <div className="relative -mr-5">
+          <div className="relative -mr-5 py-4 select-none">
             <Image
-              src="/svg/4126854_2189684.svg"
+              src="/svg/hero_ilus.svg"
               alt="Chat Illustration"
               width={500}
               priority
               height={500}
-              className="h-auto w-full "
+              className="h-auto w-full select-none pointer-events-none"
             />
           </div>
         </div>

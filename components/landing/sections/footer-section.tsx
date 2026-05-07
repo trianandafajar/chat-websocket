@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 export function FooterSection() {
@@ -6,14 +7,23 @@ export function FooterSection() {
       <div className="mx-auto max-w-6xl px-6 pb-10 pt-16">
         <div className="grid grid-cols-1 gap-12 sm:grid-cols-[1.4fr_1fr_1fr_1fr]">
           <div className="flex max-w-sm flex-col gap-4">
-            <div className="flex items-center gap-2.5">
-              <span className="grid h-6 w-6 place-items-center rounded-sm bg-primary/15 ring-1 ring-primary/30">
-                <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+            <Link
+              href="/"
+              className="group flex items-center gap-1 rounded-md px-1.5 py-1 -mx-1.5 transition-colors hover:bg-muted/40"
+            >
+              <Image
+                src="/android-chrome-512x512.png"
+                alt="Logo"
+                width={28}
+                height={28}
+                className="rounded-md ring-1 ring-primary/20 shadow-sm"
+                priority
+              />
+              <span className="text-[16px] font-bold tracking-[-0.01em] leading-none text-foreground">
+                <span className="text-primary">Chat</span>
+                <span className="ml-0.5">App</span>
               </span>
-              <span className="text-[14px] font-semibold tracking-tight">
-                Chat App
-              </span>
-            </div>
+            </Link>
             <p className="text-[13.5px] leading-[1.7] text-muted-foreground">
               A simple place to chat with friends, family, and small teams.
               Built so your conversations stay front and center - no ads, no

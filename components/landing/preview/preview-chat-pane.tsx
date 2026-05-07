@@ -4,7 +4,7 @@ import { PreviewComposer } from "@/components/landing/preview/preview-composer";
 
 export function PreviewChatPane() {
   return (
-    <div className="flex min-h-[460px] flex-col">
+    <div className="flex min-h-[380px] flex-col">
       <PreviewChatHeader />
       <PreviewMessageList />
       <PreviewComposer />

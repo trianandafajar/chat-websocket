@@ -1,15 +1,25 @@
+import Image from "next/image";
 import Link from "next/link";
 
 export function HeaderSection() {
   return (
     <header className="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-md">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
-        <Link href="/" className="flex items-center gap-2.5">
-          <span className="grid h-6 w-6 place-items-center rounded-sm bg-primary/15 ring-1 ring-primary/30">
-            <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-          </span>
-          <span className="text-[15px] font-semibold tracking-tight">
-            Chat App
+        <Link
+          href="/"
+          className="group flex items-center gap-1 rounded-md px-1.5 py-1 -mx-1.5 transition-colors hover:bg-muted/40"
+        >
+          <Image
+            src="/android-chrome-512x512.png"
+            alt="Logo"
+            width={28}
+            height={28}
+            className="rounded-md ring-1 ring-primary/20 shadow-sm"
+            priority
+          />
+          <span className="text-[16px] font-bold tracking-[-0.01em] leading-none text-foreground">
+            <span className="text-primary">Chat</span>
+            <span className="ml-0.5">App</span>
           </span>
         </Link>
 
