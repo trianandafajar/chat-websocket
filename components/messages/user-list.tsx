@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Inbox, Search, Plus, X } from "lucide-react";
+import { Inbox, Search, Plus, X, Users } from "lucide-react";
+import { ProfileModal } from "./profile-modal";
+import { Avatar } from "./avatar";
 
 interface Participant {
   id: string;
@@ -36,10 +38,6 @@ interface UserListProps {
   currentUserId?: string | null;
 }
 
-function getInitial(name?: string | null) {
-  return name?.trim().charAt(0).toUpperCase() || "?";
-}
-
 export function UserList({
   sessions,
   users,
@@ -52,6 +50,7 @@ export function UserList({
   const [search, setSearch] = useState("");
   const [showUsers, setShowUsers] = useState(false);
   const [modalQuery, setModalQuery] = useState("");
+  const [viewProfileId, setViewProfileId] = useState<string | null>(null);
 
   const filteredSessions = useMemo(() => {
     const q = search.toLowerCase().trim();
@@ -87,8 +86,7 @@ export function UserList({
 
       {/* Header */}
       {!collapsed && (
-        <div className="p-4 border-b border-border">
-          <h1 className="text-lg font-bold text-foreground mb-3">Messages</h1>
+        <div className="p-[calc(var(--spacing)*3.6)] border-b border-border">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <input
@@ -138,48 +136,46 @@ export function UserList({
                 users
                   .filter((u) => (u.name ?? "").toLowerCase().includes(modalQuery.toLowerCase().trim()))
                   .map((user) => (
-                    <button
+                    <div
                       key={user.id}
-                      onClick={async () => {
-                        try {
-                          await onStartChat(user.id);
-                          setShowUsers(false);
-                        } catch (err) {
-                          console.error('Start chat error', err);
-                          alert('Failed to start chat. Check console for details.');
-                        }
-                      }}
-                      className="w-full flex items-center justify-between px-4 py-4 text-left hover:bg-card border-b border-border/30 transition cursor-pointer"
+                      className="w-full flex items-center justify-between px-4 py-4 text-left border-b border-border/30 transition"
                     >
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <div
-                          aria-hidden="true"
-                          className="w-10 h-10 rounded-full bg-muted text-foreground border border-border flex items-center justify-center text-sm font-semibold shrink-0"
-                        >
-                          {getInitial(user.name)}
-                        </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setViewProfileId(user.id);
+                        }}
+                        className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer hover:opacity-80 transition text-left"
+                        title="View profile"
+                      >
+                        <Avatar name={user.name} picture={user.picture} size={40} />
                         <div className="min-w-0 text-left">
-                          <div className="font-medium text-sm text-foreground truncate">{user.name ?? 'Unknown'}</div>
+                          <div className="font-medium text-sm text-foreground truncate hover:text-primary transition">{user.name ?? 'Unknown'}</div>
                           <div className={`text-xs ${user.isOnline ? 'text-green-600' : 'text-muted-foreground'}`}>
                             {user.isOnline ? '● Online' : 'Offline'}
                           </div>
                         </div>
-                      </div>
+                      </button>
 
                       <div className="flex items-center gap-3 ml-3">
                         <span className={`w-2.5 h-2.5 rounded-full ${user.isOnline ? 'bg-green-500' : 'bg-muted-foreground'}`} />
                         <button
                           className="text-sm font-medium cursor-pointer hover:bg-primary/90 bg-primary text-primary-foreground px-3.5 py-1.5 rounded-lg transition"
-                          onClick={(e) => {
+                          onClick={async (e) => {
                             e.stopPropagation();
-                            onStartChat(user.id);
-                            setShowUsers(false);
+                            try {
+                              await onStartChat(user.id);
+                              setShowUsers(false);
+                            } catch (err) {
+                              console.error('Start chat error', err);
+                              alert('Failed to start chat.');
+                            }
                           }}
                         >
                           Chat
                         </button>
                       </div>
-                    </button>
+                    </div>
                   ))
               )}
             </div>
@@ -208,7 +204,6 @@ export function UserList({
               ? session.title ?? "Group Chat"
               : other?.name ?? "Unknown User";
 
-            const avatarInitial = session.isGroup ? "G" : getInitial(other?.name);
             const timeStr = session.lastMessageAt
               ? new Date(session.lastMessageAt).toLocaleTimeString("id-ID", {
                   hour: "2-digit",
@@ -217,26 +212,44 @@ export function UserList({
               : "";
 
             return (
-              <button
+              <div
                 key={session.id}
-                onClick={() => onSelectSession(session.id)}
-                className={`w-full px-4 py-3 text-left justify-start flex items-center gap-3 border-b border-border/30 cursor-pointer transition-colors duration-150
+                className={`w-full px-4 py-3 flex items-center gap-3 border-b border-border/30 transition-colors duration-150
                   ${
                     active
-                      ? "bg-primary/10 border-primary/30"
+                      ? "bg-primary/10 border-border/10"
                       : "hover:bg-muted/40"
                   }
                 `}
               >
-                <div
-                  aria-hidden="true"
-                  className="w-10 h-10 rounded-full flex items-center justify-center bg-muted text-foreground border border-border text-sm font-semibold shrink-0"
-                >
-                  {avatarInitial}
-                </div>
+                {/* Avatar - opens profile */}
+                {!session.isGroup && other ? (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setViewProfileId(other.id);
+                    }}
+                    className="rounded-full shrink-0 cursor-pointer hover:ring-2 hover:ring-primary/40 transition"
+                    title="View profile"
+                    aria-label="View profile"
+                  >
+                    <Avatar name={other.name} picture={other.picture} size={40} />
+                  </button>
+                ) : (
+                  <div
+                    aria-hidden="true"
+                    className="w-10 h-10 rounded-full flex items-center justify-center bg-muted text-foreground border border-border shrink-0"
+                  >
+                    <Users className="w-4 h-4" />
+                  </div>
+                )}
 
+                {/* Body - opens conversation */}
                 {!collapsed && (
-                  <div className="flex-1 min-w-0 text-left">
+                  <button
+                    onClick={() => onSelectSession(session.id)}
+                    className="flex-1 min-w-0 text-left cursor-pointer"
+                  >
                     <div className="flex items-center justify-between gap-2 mb-0.5">
                       <p className={`font-medium text-sm truncate ${active ? 'text-foreground font-semibold' : 'text-foreground'}`}>
                         {displayName}
@@ -248,13 +261,19 @@ export function UserList({
                     <p className="text-xs truncate text-muted-foreground">
                       {session.lastMessage ?? "No messages yet"}
                     </p>
-                  </div>
+                  </button>
                 )}
-              </button>
+              </div>
             );
           })
         )}
       </div>
+
+      <ProfileModal
+        open={!!viewProfileId}
+        onClose={() => setViewProfileId(null)}
+        userId={viewProfileId}
+      />
     </div>
   );
 }

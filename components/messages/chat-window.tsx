@@ -1,8 +1,10 @@
 "use client"
 
-import { Hand, LogOutIcon, Users } from "lucide-react"
+import { Hand, Users } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
-import { signOut } from "next-auth/react"
+import { ProfileModal } from "./profile-modal"
+import { useMyProfile } from "./my-profile-context"
+import { Avatar } from "./avatar"
 
 interface Message {
   id: string
@@ -43,14 +45,11 @@ export function ChatWindow({
   users,
 }: ChatWindowProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const [showLogoutModal, setShowLogoutModal] = useState(false)
+  const [showProfileModal, setShowProfileModal] = useState(false)
+  const { profile: myProfile } = useMyProfile()
 
-  const handleLogout = () => {
-    signOut({
-      redirect: true,
-      callbackUrl: "/",
-    })
-  }
+  const myName = myProfile?.name ?? ""
+  const myImage = myProfile?.picture ?? ""
 
   const session = sessions.find((s) => s.id === sessionId)
   if (!session) return null
@@ -65,10 +64,6 @@ export function ChatWindow({
     ? session.title ?? "Group Chat"
     : otherUser?.name ?? "Unknown User"
 
-  const avatar = isGroup
-    ? <Users className="h-4 w-4" strokeWidth={1.75} />
-    : otherUser?.name?.[0]?.toUpperCase() ?? "?"
-
   const online = !isGroup && users.find((u) => u.id === otherUser?.id)?.isOnline
 
   useEffect(() => {
@@ -76,6 +71,7 @@ export function ChatWindow({
   }, [messages, typingUsers])
 
   const typingNames = typingUsers
+    .filter((userId) => userId !== currentUserId)
     .map((userId) => session.participants?.find((p) => p.id === userId)?.name)
     .filter(Boolean)
 
@@ -101,11 +97,14 @@ export function ChatWindow({
             </span>
           )}
           <button
-            onClick={() => setShowLogoutModal(true)}
-            className="cursor-pointer text-muted-foreground hover:text-foreground transition p-2 rounded-lg hover:bg-muted"
-            title="Logout"
+            onClick={() => setShowProfileModal(true)}
+            className="cursor-pointer flex items-center gap-2 p-1 pr-3 rounded-full hover:bg-muted transition"
+            title="Your profile"
           >
-            <LogOutIcon size={20} />
+            <Avatar name={myName} picture={myImage} size={36} />
+            <span className="hidden sm:inline text-sm font-medium text-foreground max-w-[120px] truncate">
+              {myName || "You"}
+            </span>
           </button>
         </div>
       </div>
@@ -132,9 +131,17 @@ export function ChatWindow({
                 className={`flex items-end gap-2.5 ${isMe ? "justify-end" : "justify-start"}`}
               >
                 {!isMe && (
-                  <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-medium shrink-0 border border-border">
-                    {avatar}
-                  </div>
+                  isGroup ? (
+                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-medium shrink-0 border border-border">
+                      <Users className="w-3.5 h-3.5" strokeWidth={1.75} />
+                    </div>
+                  ) : (
+                    <Avatar
+                      name={otherUser?.name}
+                      picture={otherUser?.picture}
+                      size={32}
+                    />
+                  )
                 )}
 
                 <div className="max-w-[74%]">
@@ -178,33 +185,10 @@ export function ChatWindow({
         <div ref={messagesEndRef} />
       </div>
 
-      {showLogoutModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-2xl bg-white p-6 border border-border shadow-2xl">
-            <h3 className="text-lg font-semibold text-foreground">Sign out?</h3>
-
-            <p className="mt-2 text-sm text-muted-foreground">
-              You will need to sign in again to access your messages.
-            </p>
-
-            <div className="mt-6 flex justify-end gap-3">
-              <button
-                onClick={() => setShowLogoutModal(false)}
-                className="cursor-pointer px-4 py-2.5 rounded-lg text-sm font-medium border border-border text-foreground hover:bg-muted transition duration-200"
-              >
-                Cancel
-              </button>
-
-              <button
-                onClick={handleLogout}
-                className="cursor-pointer px-4 py-2.5 rounded-lg text-sm font-medium bg-red-600 text-white hover:bg-red-700 transition duration-200"
-              >
-                Sign out
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ProfileModal
+        open={showProfileModal}
+        onClose={() => setShowProfileModal(false)}
+      />
     </div>
   )
 }

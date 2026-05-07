@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { UserList } from "@/components/messages/user-list";
 import { ChatWindow } from "@/components/messages/chat-window";
+import { MyProfileProvider } from "@/components/messages/my-profile-context";
 import { Send, Menu, X } from "lucide-react";
 import { useSession } from "next-auth/react";
 
@@ -212,6 +213,7 @@ export default function ChatApp() {
           }
 
           if (data.type === "typing") {
+            if (data.userId === session?.user?.id) return;
             setTypingUsers((prev) => new Set(prev).add(data.userId));
           }
 
@@ -328,6 +330,7 @@ export default function ChatApp() {
   };
 
   return (
+    <MyProfileProvider>
     <div className="h-screen flex bg-background">
       <button
         ref={toggleRef}
@@ -435,5 +438,6 @@ export default function ChatApp() {
         )}
       </div>
     </div>
+    </MyProfileProvider>
   );
 }

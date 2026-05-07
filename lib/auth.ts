@@ -41,11 +41,12 @@ export const authOptions: NextAuthOptions = {
 
         if (!valid) return null;
 
+        // NOTE: image sengaja tidak di-return supaya tidak masuk JWT cookie.
+        // Foto profil di-fetch lewat /api/profile untuk hindari HTTP 431.
         return {
           id: user.id,
           email: user.email,
           name: user.name,
-          image: user.picture,
         };
       },
     }),
@@ -75,13 +76,24 @@ export const authOptions: NextAuthOptions = {
       return true;
     },
 
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       // SAAT LOGIN
       if (user) {
         token.id = user.id;
         token.email = user.email;
         token.name = user.name;
-        token.picture = user.image;
+      }
+
+      // SAAT useSession().update({ name }) DIPANGGIL DARI CLIENT
+      if (trigger === "update" && session) {
+        if (session.name !== undefined) token.name = session.name;
+      }
+
+      // PENTING: picture tidak boleh masuk JWT — base64 avatar bisa
+      // membuat cookie > 8KB dan trigger HTTP 431. Foto di-fetch dari /api/profile.
+      // Hapus jika pernah ke-set (misal dari Google provider atau session lama).
+      if ("picture" in token) {
+        delete token.picture;
       }
 
       return token;
@@ -92,7 +104,7 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.id as string;
         session.user.email = token.email as string;
         session.user.name = token.name as string;
-        session.user.image = token.picture as string;
+        // image sengaja tidak di-set dari token; consumer harus fetch /api/profile.
       }
 
       return session;
