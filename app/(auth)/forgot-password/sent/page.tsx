@@ -1,6 +1,8 @@
 "use client"
 
+import Image from "next/image"
 import { MailCheck } from "lucide-react"
+import Link from "next/link";
 
 export default function EmailSentPage() {
   return (
@@ -8,6 +10,21 @@ export default function EmailSentPage() {
       <div className="w-full max-w-md">
 
         <div className="bg-card p-6 space-y-6 border border-border rounded-lg text-center">
+
+          <Link href="/" className="flex items-center justify-center gap-1.5">
+            <Image
+              src="/android-chrome-512x512.png"
+              alt="Logo"
+              width={42}
+              height={42}
+              className="rounded-md ring-1 ring-primary/20 shadow-sm"
+              priority
+            />
+            <span className="text-lg font-bold tracking-[-0.01em] leading-none text-foreground">
+              <span className="text-primary">Chat</span>
+              <span className="ml-0.5">App</span>
+            </span>
+          </Link>
 
           {/* Icon */}
           <div className="flex justify-center">

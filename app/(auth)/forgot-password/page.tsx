@@ -1,7 +1,9 @@
 "use client"
 
 import { useState } from "react"
-import { Mail, MessageCircle, ArrowLeft } from "lucide-react"
+import Image from "next/image"
+import { Mail, ArrowLeft } from "lucide-react"
+import Link from "next/link";
 
 export default function ForgotPasswordPage() {
   const [emailSent, setEmailSent] = useState(false)
@@ -9,18 +11,22 @@ export default function ForgotPasswordPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-white to-blue-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary mb-4 mx-auto">
-            <MessageCircle className="w-6 h-6 text-primary-foreground" />
-          </div>
-          <h1 className="text-3xl font-bold text-foreground mb-2">Reset password</h1>
-          <p className="text-muted-foreground">We'll send you a link to get back in</p>
-        </div>
-
         {/* Form */}
         <div className="bg-white p-8 space-y-6 rounded-2xl shadow-lg border border-border">
+          <Link href="/" className="flex items-center justify-center gap-1.5">
+            <Image
+              src="/android-chrome-512x512.png"
+              alt="Logo"
+              width={42}
+              height={42}
+              className="rounded-md ring-1 ring-primary/20 shadow-sm"
+              priority
+            />
+            <span className="text-lg font-bold tracking-[-0.01em] leading-none text-foreground">
+              <span className="text-primary">Chat</span>
+              <span className="ml-0.5">App</span>
+            </span>
+          </Link>
 
           {!emailSent ? (
             <>

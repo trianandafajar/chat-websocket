@@ -186,7 +186,7 @@ export function ProfilePanel({ userId, isSelf, onClose }: ProfilePanelProps) {
 
   return (
     <aside className="hidden md:flex w-[300px] shrink-0 border-l border-border bg-card/40 flex-col">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+      <div className="flex items-center justify-between px-4 py-6 border-b border-border">
         <h3 className="text-sm font-semibold text-foreground">
           {isSelf ? "Your Profile" : "Profile"}
         </h3>

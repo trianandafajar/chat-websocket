@@ -67,7 +67,7 @@ export function PreviewSidebar({
                 <button
                   type="button"
                   onClick={() => onSelectSession(session.id)}
-                  className={`w-full px-3 py-2.5 text-left flex items-center gap-2.5 border-b border-border/30 transition ${
+                  className={`w-full px-3 py-2.5 cursor-pointer text-left flex items-center gap-2.5 border-b border-border/30 transition ${
                     active ? "bg-primary/10 border-primary/30" : "hover:bg-muted/50"
                   }`}
                 >

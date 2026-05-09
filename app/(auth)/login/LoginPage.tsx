@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Mail, Lock, Eye, EyeOff, MessageCircle, Loader2 } from "lucide-react";
+import Image from "next/image";
+import { Mail, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
 import { signIn } from "next-auth/react";
+import Link from "next/link";
 
 const QUICK_ACCOUNTS = [
   { name: "Alice", email: "alice@gmail.com", avatar: "/avatar1.jpg" },
@@ -56,20 +58,25 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-white to-blue-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary mb-4 mx-auto">
-            <MessageCircle className="w-6 h-6 text-primary-foreground" />
-          </div>
-          <h1 className="text-3xl font-bold text-foreground mb-2">Welcome back</h1>
-          <p className="text-muted-foreground">Your conversations are waiting</p>
-        </div>
-
         {/* Form */}
         <form
           onSubmit={handleCredentialsLogin}
           className="bg-white p-8 space-y-6 rounded-2xl shadow-lg border border-border"
         >
+          <Link href="/" className="flex items-center justify-center gap-1.5">
+            <Image
+              src="/android-chrome-512x512.png"
+              alt="Logo"
+              width={42}
+              height={42}
+              className="rounded-md ring-1 ring-primary/20 shadow-sm"
+              priority
+            />
+            <span className="text-lg font-bold tracking-[-0.01em] leading-none text-foreground">
+              <span className="text-primary">Chat</span>
+              <span className="ml-0.5">App</span>
+            </span>
+          </Link>
           {error && (
             <div className="text-sm text-red-600 bg-red-50 border border-red-200 px-4 py-3 rounded-lg">
               {error}

@@ -24,7 +24,7 @@ export function PreviewComposer({ value, onChange, onSend }: PreviewComposerProp
         <button
           type="button"
           onClick={onSend}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground transition hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex h-9 w-9 shrink-0 items-center cursor-pointer justify-center rounded-md bg-primary text-primary-foreground transition hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
           disabled={!value.trim()}
           aria-label="Send message"
         >

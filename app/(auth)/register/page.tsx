@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Mail, Lock, User, Eye, EyeOff, MessageCircle } from "lucide-react";
+import Image from "next/image";
+import { Mail, Lock, User, Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { registerAction } from "@/app/actions/auth";
+import Link from "next/link";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -40,17 +42,23 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-white to-blue-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary mb-4 mx-auto">
-            <MessageCircle className="w-6 h-6 text-primary-foreground" />
-          </div>
-          <h1 className="text-3xl font-bold text-foreground mb-2">Get started</h1>
-          <p className="text-muted-foreground">Join the conversation in seconds</p>
-        </div>
-
         {/* Form */}
         <div className="bg-white p-8 space-y-6 rounded-2xl shadow-lg border border-border">
+          <Link href="/" className="flex items-center justify-center gap-1.5">
+            <Image
+              src="/android-chrome-512x512.png"
+              alt="Logo"
+              width={42}
+              height={42}
+              className="rounded-md ring-1 ring-primary/20 shadow-sm"
+              priority
+            />
+            <span className="text-lg font-bold tracking-[-0.01em] leading-none text-foreground">
+              <span className="text-primary">Chat</span>
+              <span className="ml-0.5">App</span>
+            </span>
+          </Link>
+
           {error && (
             <div className="text-sm text-red-600 bg-red-50 border border-red-200 px-4 py-3 rounded-lg">
               {error}
@@ -158,7 +166,7 @@ export default function RegisterPage() {
         <p className="text-center text-sm text-muted-foreground mt-6">
           Already have an account?{" "}
           <button
-            onClick={() => router.push("/")}
+            onClick={() => router.push("/login")}
             className="text-primary font-semibold cursor-pointer hover:text-accent transition"
           >
             Sign in
