@@ -1,8 +1,7 @@
 "use client"
 
 import { Hand, Users } from "lucide-react"
-import { useEffect, useRef, useState } from "react"
-import { ProfileModal } from "./profile-modal"
+import { useEffect, useRef } from "react"
 import { useMyProfile } from "./my-profile-context"
 import { Avatar } from "./avatar"
 
@@ -34,6 +33,7 @@ interface ChatWindowProps {
   currentUserId: string
   typingUsers: string[]
   users: Participant[]
+  onShowProfile: (userId: string) => void
 }
 
 export function ChatWindow({
@@ -43,9 +43,9 @@ export function ChatWindow({
   currentUserId,
   typingUsers,
   users,
+  onShowProfile,
 }: ChatWindowProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const [showProfileModal, setShowProfileModal] = useState(false)
   const { profile: myProfile } = useMyProfile()
 
   const myName = myProfile?.name ?? ""
@@ -79,14 +79,30 @@ export function ChatWindow({
     <div className="flex-1 flex flex-col overflow-hidden">
       <div className="px-4 md:px-6 py-4 border-b border-border bg-background flex items-center justify-between">
         <div className="max-sm:ml-14 flex items-center gap-3 min-w-0">
-          <div className="min-w-0">
-            <h2 className="text-[22px] font-semibold leading-none tracking-tight text-foreground truncate">
-              {title}
-            </h2>
-            <p className="font-mono text-[11px] text-muted-foreground">
-              {isGroup ? "4 people online" : online ? "Active now" : "Offline"}
-            </p>
-          </div>
+          {!isGroup && otherUser ? (
+            <button
+              type="button"
+              onClick={() => onShowProfile(otherUser.id)}
+              className="group min-w-0 text-left cursor-pointer"
+              title="View profile"
+            >
+              <h2 className="text-[22px] font-semibold leading-none tracking-tight text-foreground truncate group-hover:text-primary transition-colors">
+                {title}
+              </h2>
+              <p className="font-mono text-[11px] text-muted-foreground mt-1">
+                {online ? "Active now" : "Offline"}
+              </p>
+            </button>
+          ) : (
+            <div className="min-w-0">
+              <h2 className="text-[22px] font-semibold leading-none tracking-tight text-foreground truncate">
+                {title}
+              </h2>
+              <p className="font-mono text-[11px] text-muted-foreground">
+                {isGroup ? "4 people online" : online ? "Active now" : "Offline"}
+              </p>
+            </div>
+          )}
         </div>
 
         <div className="flex items-center gap-2">
@@ -97,7 +113,8 @@ export function ChatWindow({
             </span>
           )}
           <button
-            onClick={() => setShowProfileModal(true)}
+            type="button"
+            onClick={() => onShowProfile(currentUserId)}
             className="cursor-pointer flex items-center gap-2 p-1 pr-3 rounded-full hover:bg-muted transition"
             title="Your profile"
           >
@@ -109,7 +126,7 @@ export function ChatWindow({
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto px-4 md:px-6 py-4 space-y-4 bg-background">
+      <div className="flex-1 min-h-0 overflow-y-auto px-4 md:px-6 py-4 space-y-4 bg-background [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
         {messages.length === 0 ? (
           <div className="h-full flex items-center justify-center text-muted-foreground">
             <div className="text-center">
@@ -135,13 +152,21 @@ export function ChatWindow({
                     <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-medium shrink-0 border border-border">
                       <Users className="w-3.5 h-3.5" strokeWidth={1.75} />
                     </div>
-                  ) : (
-                    <Avatar
-                      name={otherUser?.name}
-                      picture={otherUser?.picture}
-                      size={32}
-                    />
-                  )
+                  ) : otherUser ? (
+                    <button
+                      type="button"
+                      onClick={() => onShowProfile(otherUser.id)}
+                      className="rounded-full shrink-0 cursor-pointer hover:ring-2 hover:ring-primary/40 transition"
+                      title="View profile"
+                      aria-label="View profile"
+                    >
+                      <Avatar
+                        name={otherUser.name}
+                        picture={otherUser.picture}
+                        size={32}
+                      />
+                    </button>
+                  ) : null
                 )}
 
                 <div className="max-w-[74%]">
@@ -185,10 +210,6 @@ export function ChatWindow({
         <div ref={messagesEndRef} />
       </div>
 
-      <ProfileModal
-        open={showProfileModal}
-        onClose={() => setShowProfileModal(false)}
-      />
     </div>
   )
 }

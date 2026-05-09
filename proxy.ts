@@ -14,7 +14,6 @@ export async function proxy(req: NextRequest) {
   
 
   const isAuthPage =
-    pathname === "/" ||
     pathname === "/register" ||
     pathname.startsWith("/auth")
 
@@ -23,7 +22,7 @@ export async function proxy(req: NextRequest) {
     pathname.startsWith("/messages/")
 
   if (!token && isProtectedRoute) {
-    return NextResponse.redirect(new URL("/", req.url))
+    return NextResponse.redirect(new URL("/login", req.url))
   }
 
   if (token && isAuthPage) {

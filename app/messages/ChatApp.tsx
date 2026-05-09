@@ -3,8 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import { UserList } from "@/components/messages/user-list";
 import { ChatWindow } from "@/components/messages/chat-window";
+import { ProfilePanel } from "@/components/messages/profile-panel";
 import { MyProfileProvider } from "@/components/messages/my-profile-context";
-import { Send, Menu, X } from "lucide-react";
+import { Send, Menu, X, ChevronLeft, ChevronRight, UserCircle2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 
 type User = {
@@ -40,6 +41,76 @@ export default function ChatApp() {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [wsAlive, setWsAlive] = useState(false);
   const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
+  const [sidebarWidth, setSidebarWidth] = useState(288);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
+  const [showProfilePanel, setShowProfilePanel] = useState(true);
+  const [panelUserId, setPanelUserId] = useState<string | null>(null);
+
+  const SIDEBAR_MIN = 220;
+  const SIDEBAR_MAX = 480;
+  const SIDEBAR_COLLAPSED = 72;
+
+  useEffect(() => {
+    const w = Number(localStorage.getItem("sidebarWidth"));
+    if (w) setSidebarWidth(Math.min(SIDEBAR_MAX, Math.max(SIDEBAR_MIN, w)));
+    if (localStorage.getItem("sidebarCollapsed") === "1") setSidebarCollapsed(true);
+    if (localStorage.getItem("profilePanelHidden") === "1") setShowProfilePanel(false);
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("profilePanelHidden", showProfilePanel ? "0" : "1");
+  }, [showProfilePanel]);
+
+  useEffect(() => {
+    if (!selectedSessionId) {
+      setPanelUserId(null);
+      return;
+    }
+    const s = sessions.find((x) => x.id === selectedSessionId);
+    if (!s || s.isGroup) {
+      setPanelUserId(null);
+      return;
+    }
+    const otherId =
+      s.participants?.find((p) => p.id !== session?.user?.id)?.id ?? null;
+    setPanelUserId(otherId);
+  }, [selectedSessionId]);
+
+  const handleShowProfile = (userId: string) => {
+    setPanelUserId(userId);
+    setShowProfilePanel(true);
+  };
+
+  useEffect(() => {
+    localStorage.setItem("sidebarWidth", String(sidebarWidth));
+  }, [sidebarWidth]);
+
+  useEffect(() => {
+    localStorage.setItem("sidebarCollapsed", sidebarCollapsed ? "1" : "0");
+  }, [sidebarCollapsed]);
+
+  const startResize = (e: React.MouseEvent) => {
+    if (sidebarCollapsed) return;
+    e.preventDefault();
+    setIsResizing(true);
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+
+    const onMove = (ev: MouseEvent) => {
+      const next = Math.min(SIDEBAR_MAX, Math.max(SIDEBAR_MIN, ev.clientX));
+      setSidebarWidth(next);
+    };
+    const onUp = () => {
+      setIsResizing(false);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  };
 
   const wsRef = useRef<WebSocket | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
@@ -48,6 +119,14 @@ export default function ChatApp() {
   const pingTimerRef = useRef<number | null>(null);
   const typingTimeoutRef = useRef<number | null>(null);
   const toggleRef = useRef<HTMLButtonElement | null>(null);
+  const inputRef = useRef<HTMLTextAreaElement | null>(null);
+
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
+  }, [inputValue]);
 
 
   const { data: session } = useSession();
@@ -334,7 +413,7 @@ export default function ChatApp() {
     <div className="h-screen flex bg-background overflow-hidden">
       <button
         ref={toggleRef}
-        className="md:hidden fixed cursor-pointer top-4 left-4 z-40"
+        className="md:hidden fixed cursor-pointer top-6 left-4 z-40"
         onClick={() => setShowMobileMenu((v) => !v)}
       >
         {showMobileMenu ? <X /> : <Menu />}
@@ -342,9 +421,10 @@ export default function ChatApp() {
 
       <div
         ref={menuRef}
-        className={`w-72 border-r bg-card/90 backdrop-blur-md fixed md:relative top-0 h-full z-50 transition-all duration-300 ease-out md:translate-x-0 md:opacity-100
+        style={{ width: sidebarCollapsed ? SIDEBAR_COLLAPSED : sidebarWidth }}
+        className={`relative shrink-0 border-r bg-card/90 backdrop-blur-md fixed md:relative top-0 h-full z-50 ease-out md:translate-x-0 md:opacity-100 ${isResizing ? "" : "transition-[transform,opacity,width] duration-300"}
           ${showMobileMenu
-            ? "translate-x-0 opacity-100 w-2xs"
+            ? "translate-x-0 opacity-100"
             : "-translate-x-full opacity-0"
           }
         `}
@@ -358,7 +438,7 @@ export default function ChatApp() {
               className="p-2 rounded-md hover:bg-muted"
               aria-label="Close menu"
             >
-              <X /> 
+              <X />
             </button>
           </div>
         )}
@@ -368,16 +448,38 @@ export default function ChatApp() {
           selectedSessionId={selectedSessionId}
           onSelectSession={(id) => {
             setSelectedSessionId(id);
-            console.log('id', id);
-            
             setShowMobileMenu(false);
           }}
           currentUserId={session?.user?.id}
+          collapsed={sidebarCollapsed}
           onStartChat={async (userId) => {
             await startChat(userId);
             setShowMobileMenu(false);
           }}
         />
+
+        <div
+          onMouseDown={startResize}
+          className={`hidden md:block absolute top-0 -right-1 h-full w-2 ${sidebarCollapsed ? "" : "cursor-col-resize"} group`}
+        >
+          <div
+            className={`absolute top-0 left-1/2 -translate-x-1/2 h-full w-px ${sidebarCollapsed ? "" : "group-hover:bg-primary/50"} transition-colors`}
+          />
+          <button
+            type="button"
+            onMouseDown={(e) => e.stopPropagation()}
+            onClick={() => setSidebarCollapsed((v) => !v)}
+            className="absolute top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 z-10 w-5 h-5 rounded-full bg-card border border-border shadow-sm flex items-center justify-center cursor-pointer hover:bg-muted hover:border-primary/40 transition"
+            aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            title={sidebarCollapsed ? "Expand" : "Collapse"}
+          >
+            {sidebarCollapsed ? (
+              <ChevronRight className="w-3 h-3" />
+            ) : (
+              <ChevronLeft className="w-3 h-3" />
+            )}
+          </button>
+        </div>
       </div>
 
       <div className="flex-1 flex flex-col">
@@ -391,11 +493,14 @@ export default function ChatApp() {
               currentUserId={session?.user?.id}
               typingUsers={Array.from(typingUsers)}
               users={users}
+              onShowProfile={handleShowProfile}
             />
 
-            <div className="p-4 border-t flex gap-3 sticky bottom-0 bg-background/80 backdrop-blur-sm">
-              <input
+            <div className="p-4 border-t flex gap-3 items-end sticky bottom-0 bg-background/80 backdrop-blur-sm">
+              <textarea
+                ref={inputRef}
                 value={inputValue}
+                rows={1}
                 onChange={(e) => setInputValue(e.target.value)}
                 onInput={() => {
                   if (wsRef.current?.readyState === WebSocket.OPEN && selectedSessionId) {
@@ -417,13 +522,18 @@ export default function ChatApp() {
                     }, 2000);
                   }
                 }}
-                className="flex-1 border border-border bg-input rounded-lg px-4 py-3 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
+                className="flex-1 resize-none border border-border bg-input rounded-lg px-4 py-3 text-sm leading-5 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition max-h-40 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
                 placeholder="Type your message..."
-                onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSendMessage();
+                  }
+                }}
               />
               <button
                 onClick={handleSendMessage}
-                className="bg-primary hover:bg-accent text-primary-foreground px-4 py-3 rounded-lg cursor-pointer transition-colors duration-200 flex items-center justify-center"
+                className="bg-primary hover:bg-accent text-primary-foreground px-4 py-3 rounded-lg cursor-pointer transition-colors duration-200 flex items-center justify-center shrink-0"
               >
                 <Send size={18} />
               </button>
@@ -437,6 +547,14 @@ export default function ChatApp() {
           </div>
         )}
       </div>
+
+      {showProfilePanel && panelUserId ? (
+        <ProfilePanel
+          userId={panelUserId}
+          isSelf={panelUserId === session?.user?.id}
+          onClose={() => setShowProfilePanel(false)}
+        />
+      ) : null}
     </div>
     </MyProfileProvider>
   );

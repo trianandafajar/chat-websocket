@@ -6,11 +6,5 @@ export default async function AuthLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth();
-
-  if (session) {
-    redirect("/messages");
-  }
-
   return <>{children}</>;
 }

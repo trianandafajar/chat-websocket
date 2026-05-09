@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import { Mail, Lock, Eye, EyeOff, MessageCircle, Loader2 } from "lucide-react";
 import { signIn } from "next-auth/react";
 
@@ -38,7 +37,7 @@ export default function LoginPage() {
   };
 
   const handleCredentialsLogin = async (
-    e: React.FormEvent<HTMLFormElement>,
+    e: React.FormEvent<HTMLFormElement>
   ) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -55,31 +54,15 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white to-blue-50 flex items-center justify-center px-4 py-8">
-      <div className="grid w-full max-w-5xl items-center gap-8 lg:grid-cols-[minmax(0,440px)_minmax(0,520px)] lg:gap-14">
-        <div className="order-1 mx-auto w-full max-w-[320px] select-none lg:order-2 lg:max-w-[520px]">
-          <Image
-            src="/svg/hero_ilus.svg"
-            alt="Chat Illustration"
-            width={520}
-            height={520}
-            priority
-            className="h-auto w-full pointer-events-none"
-          />
-        </div>
-
-        <div className="order-2 w-full max-w-md justify-self-center lg:order-1">
+    <div className="min-h-screen bg-gradient-to-br from-white to-blue-50 flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary mb-4 mx-auto">
             <MessageCircle className="w-6 h-6 text-primary-foreground" />
           </div>
-          <h1 className="text-3xl font-bold text-foreground mb-2">
-            Welcome back
-          </h1>
-          <p className="text-muted-foreground">
-            Your conversations are waiting
-          </p>
+          <h1 className="text-3xl font-bold text-foreground mb-2">Welcome back</h1>
+          <p className="text-muted-foreground">Your conversations are waiting</p>
         </div>
 
         {/* Form */}
@@ -95,10 +78,7 @@ export default function LoginPage() {
 
           {/* Email */}
           <div className="space-y-2">
-            <label
-              htmlFor="email"
-              className="block text-sm font-semibold text-foreground"
-            >
+            <label htmlFor="email" className="block text-sm font-semibold text-foreground">
               Email
             </label>
             <div className="relative">
@@ -118,10 +98,7 @@ export default function LoginPage() {
           {/* Password */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <label
-                htmlFor="password"
-                className="block text-sm font-semibold text-foreground"
-              >
+              <label htmlFor="password" className="block text-sm font-semibold text-foreground">
                 Password
               </label>
               <button
@@ -176,15 +153,6 @@ export default function LoginPage() {
           >
             Sign in
           </button>
-          <p className="text-center text-sm text-muted-foreground mt-2">
-            Don’t have an account?{" "}
-            <button
-              onClick={() => (window.location.href = "/register")}
-              className="text-primary font-semibold cursor-pointer hover:text-accent transition"
-            >
-              Create one
-            </button>
-          </p>
         </form>
 
         {/* Quick Login (demo accounts) */}
@@ -235,7 +203,17 @@ export default function LoginPage() {
             })}
           </div>
         </div>
-      </div>
+
+        {/* Footer */}
+        <p className="text-center text-sm text-muted-foreground mt-6">
+          Don’t have an account?{" "}
+          <button
+            onClick={() => (window.location.href = "/register")}
+            className="text-primary font-semibold cursor-pointer hover:text-accent transition"
+          >
+            Create one
+          </button>
+        </p>
       </div>
     </div>
   );

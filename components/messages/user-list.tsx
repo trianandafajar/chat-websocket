@@ -2,7 +2,6 @@
 
 import { useState, useMemo } from "react";
 import { Inbox, Search, Plus, X, Users } from "lucide-react";
-import { ProfileModal } from "./profile-modal";
 import { Avatar } from "./avatar";
 
 interface Participant {
@@ -50,7 +49,6 @@ export function UserList({
   const [search, setSearch] = useState("");
   const [showUsers, setShowUsers] = useState(false);
   const [modalQuery, setModalQuery] = useState("");
-  const [viewProfileId, setViewProfileId] = useState<string | null>(null);
 
   const filteredSessions = useMemo(() => {
     const q = search.toLowerCase().trim();
@@ -112,8 +110,16 @@ export function UserList({
         <div className="fixed w-[100vw] inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="relative w-[min(500px,95vw)] bg-white rounded-2xl shadow-2xl overflow-hidden border border-border">
             {/* Modal Header */}
-            <div className="flex items-center justify-between p-6 border-b">
-              <h3 className="text-lg font-semibold text-foreground">Start new chat</h3>
+            <div className="flex gap-2 items-center justify-between p-4 border-b">
+              <div className="relative w-full">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <input
+                  value={modalQuery}
+                  onChange={(e) => setModalQuery(e.target.value)}
+                  placeholder="Search users..."
+                  className="w-full pl-10 pr-4 py-2.5 text-sm bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
+                />
+              </div>
               <button
                 className="p-2 rounded-lg cursor-pointer hover:bg-muted transition"
                 onClick={() => setShowUsers(false)}
@@ -123,50 +129,66 @@ export function UserList({
               </button>
             </div>
 
-            {/* Search */}
-            <div className="p-4 border-b">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <input
-                  value={modalQuery}
-                  onChange={(e) => setModalQuery(e.target.value)}
-                  placeholder="Search users..."
-                  className="w-full pl-10 pr-4 py-2.5 text-sm bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
-                />
-              </div>
+
+            <div className="flex items-center justify-between px-4 pt-4 pb-2">
+              <h2 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Recommendations
+              </h2>
+              <span className="text-[11px] font-medium text-muted-foreground/70">
+                {
+                  users.filter((u) =>
+                    (u.name ?? "")
+                      .toLowerCase()
+                      .includes(modalQuery.toLowerCase().trim()),
+                  ).length
+                }
+              </span>
             </div>
 
             {/* User List */}
-            <div className="max-h-[60vh] overflow-y-auto">
-              {users.filter(u => (u.name ?? '').toLowerCase().includes(modalQuery.toLowerCase().trim())).length === 0 ? (
-                <p className="p-8 text-sm text-muted-foreground text-center">No users found</p>
+            <div className="max-h-[60vh] min-h-[60vh] overflow-y-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
+              {users.filter((u) =>
+                (u.name ?? "")
+                  .toLowerCase()
+                  .includes(modalQuery.toLowerCase().trim()),
+              ).length === 0 ? (
+                <p className="p-8 text-sm text-muted-foreground text-center">
+                  No users found
+                </p>
               ) : (
                 users
-                  .filter((u) => (u.name ?? "").toLowerCase().includes(modalQuery.toLowerCase().trim()))
+                  .filter((u) =>
+                    (u.name ?? "")
+                      .toLowerCase()
+                      .includes(modalQuery.toLowerCase().trim()),
+                  )
                   .map((user) => (
                     <div
                       key={user.id}
                       className="w-full flex items-center justify-between px-4 py-4 text-left border-b border-border/30 transition"
                     >
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setViewProfileId(user.id);
-                        }}
-                        className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer hover:opacity-80 transition text-left"
-                        title="View profile"
-                      >
-                        <Avatar name={user.name} picture={user.picture} size={40} />
+                      <div className="flex items-center gap-3 flex-1 min-w-0 text-left">
+                        <Avatar
+                          name={user.name}
+                          picture={user.picture}
+                          size={40}
+                        />
                         <div className="min-w-0 text-left">
-                          <div className="font-medium text-sm text-foreground truncate hover:text-primary transition">{user.name ?? 'Unknown'}</div>
-                          <div className={`text-xs ${user.isOnline ? 'text-green-600' : 'text-muted-foreground'}`}>
-                            {user.isOnline ? '● Online' : 'Offline'}
+                          <div className="font-medium text-sm text-foreground truncate">
+                            {user.name ?? "Unknown"}
+                          </div>
+                          <div
+                            className={`text-xs ${user.isOnline ? "text-green-600" : "text-muted-foreground"}`}
+                          >
+                            {user.isOnline ? "● Online" : "Offline"}
                           </div>
                         </div>
-                      </button>
+                      </div>
 
                       <div className="flex items-center gap-3 ml-3">
-                        <span className={`w-2.5 h-2.5 rounded-full ${user.isOnline ? 'bg-green-500' : 'bg-muted-foreground'}`} />
+                        <span
+                          className={`w-2.5 h-2.5 rounded-full ${user.isOnline ? "bg-green-500" : "bg-muted-foreground"}`}
+                        />
                         <button
                           className="text-sm font-medium cursor-pointer hover:bg-primary/90 bg-primary text-primary-foreground px-3.5 py-1.5 rounded-lg transition"
                           onClick={async (e) => {
@@ -175,8 +197,8 @@ export function UserList({
                               await onStartChat(user.id);
                               setShowUsers(false);
                             } catch (err) {
-                              console.error('Start chat error', err);
-                              alert('Failed to start chat.');
+                              console.error("Start chat error", err);
+                              alert("Failed to start chat.");
                             }
                           }}
                         >
@@ -192,7 +214,7 @@ export function UserList({
       )}
 
       {/* SESSIONS LIST */}
-      <div className="flex-1 overflow-y-auto max-h-[calc(100vh-6rem)]">
+      <div className="flex-1 overflow-y-auto max-h-[calc(100vh-6rem)] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
         {filteredSessions.length === 0 ? (
           <div className="p-6 text-sm text-muted-foreground text-center">
             <Inbox className="mx-auto mb-2 h-8 w-8 text-muted-foreground" />
@@ -206,11 +228,12 @@ export function UserList({
             // pick the other participant for one-to-one chats
             const other = session.isGroup
               ? null
-              : session.participants?.find((p) => p.id !== currentUserId) ?? session.participants?.[0];
+              : (session.participants?.find((p) => p.id !== currentUserId) ??
+                session.participants?.[0]);
 
             const displayName = session.isGroup
-              ? session.title ?? "Group Chat"
-              : other?.name ?? "Unknown User";
+              ? (session.title ?? "Group Chat")
+              : (other?.name ?? "Unknown User");
 
             const timeStr = session.lastMessageAt
               ? new Date(session.lastMessageAt).toLocaleTimeString("id-ID", {
@@ -230,18 +253,18 @@ export function UserList({
                   }
                 `}
               >
-                {/* Avatar - opens profile */}
+                {/* Avatar - opens conversation (profile shows in right panel) */}
                 {!session.isGroup && other ? (
                   <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setViewProfileId(other.id);
-                    }}
+                    onClick={() => onSelectSession(session.id)}
                     className="rounded-full shrink-0 cursor-pointer hover:ring-2 hover:ring-primary/40 transition"
-                    title="View profile"
-                    aria-label="View profile"
+                    aria-label="Open conversation"
                   >
-                    <Avatar name={other.name} picture={other.picture} size={40} />
+                    <Avatar
+                      name={other.name}
+                      picture={other.picture}
+                      size={40}
+                    />
                   </button>
                 ) : (
                   <div
@@ -259,11 +282,15 @@ export function UserList({
                     className="flex-1 min-w-0 text-left cursor-pointer"
                   >
                     <div className="flex items-center justify-between gap-2 mb-0.5">
-                      <p className={`font-medium text-sm truncate ${active ? 'text-foreground font-semibold' : 'text-foreground'}`}>
+                      <p
+                        className={`font-medium text-sm truncate ${active ? "text-foreground font-semibold" : "text-foreground"}`}
+                      >
                         {displayName}
                       </p>
                       {timeStr && (
-                        <span className="text-xs text-muted-foreground shrink-0">{timeStr}</span>
+                        <span className="text-xs text-muted-foreground shrink-0">
+                          {timeStr}
+                        </span>
                       )}
                     </div>
                     <p className="text-xs truncate text-muted-foreground">
@@ -277,12 +304,6 @@ export function UserList({
         )}
       </div>
 
-      <ProfileModal
-        open={!!viewProfileId}
-        onClose={() => setViewProfileId(null)}
-        userId={viewProfileId}
-      />
     </div>
   );
 }
-
