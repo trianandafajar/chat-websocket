@@ -36,24 +36,24 @@ export function FooterSection() {
               Pages
             </p>
             <div className="flex flex-col gap-2 text-[13.5px] text-muted-foreground">
-              <a
+              <Link
                 className="transition-colors hover:text-foreground"
-                href="#preview"
+                href="/#preview"
               >
                 Preview
-              </a>
-              <a
+              </Link>
+              <Link
                 className="transition-colors hover:text-foreground"
-                href="#features"
+                href="/#features"
               >
                 Features
-              </a>
-              <a
+              </Link>
+              <Link
                 className="transition-colors hover:text-foreground"
-                href="#how"
+                href="/#how"
               >
                 How it works
-              </a>
+              </Link>
             </div>
           </div>
 
@@ -88,12 +88,18 @@ export function FooterSection() {
               Help
             </p>
             <div className="flex flex-col gap-2 text-[13.5px] text-muted-foreground">
-              <a className="transition-colors hover:text-foreground" href="#">
+              <Link
+                className="transition-colors hover:text-foreground"
+                href="/privacy-policy"
+              >
                 Privacy policy
-              </a>
-              <a className="transition-colors hover:text-foreground" href="#">
+              </Link>
+              <Link
+                className="transition-colors hover:text-foreground"
+                href="/terms-of-use"
+              >
                 Terms of use
-              </a>
+              </Link>
             </div>
           </div>
         </div>
