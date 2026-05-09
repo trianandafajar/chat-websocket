@@ -85,20 +85,20 @@
         d="M257.54959,348.73357a5.28451,5.28451,0,0,0,2.30109,1.15475,1.64208,1.64208,0,0,0,1.90292-1.31814,6.82276,6.82276,0,0,0,2.611,3.3488c1.27839.6663,3.25518.10759,3.43945-1.32221a6.03374,6.03374,0,0,0,1.38876,2.9315,2.08,2.08,0,0,0,2.924.09773c-.55984,3.05954-.2143,6.206-.39011,9.31132s-1.00389,6.39749-3.35005,8.43949c-3.42161,2.978-8.56687,2.243-13.06771,1.67883a3.96645,3.96645,0,0,0-2.04785.112c-1.68526.718-1.60881,3.064-1.63154,4.89566a13.60286,13.60286,0,0,1-11.91116,12.91753,6.81884,6.81884,0,0,1-5.06792-1.23685c-1.27791-1.08318-1.93066-2.84861-3.395-3.66229-2.38194-1.32358-5.2708.60671-7.0123,2.70259s-3.45788,4.674-6.15573,5.05765c-3.56806.50738-6.28566-3.12887-7.619-6.47711a37.75868,37.75868,0,0,1,.7504-29.33885C218.66915,341.78573,244.11922,339.217,257.54959,348.73357Z"
         transform="translate(-167.43243 -80.45646)" fill="#2f2e41" />
   <g id="phone-chat-ui">
-        <circle cx="288" cy="90" r="19" fill="#6c63ff" />
+        <circle cx="300" cy="90" r="19" fill="#6c63ff" />
 
-        <circle cx="288" cy="90" r="9" fill="#ffffff" opacity="0.9" />
+        <circle cx="300" cy="90" r="9" fill="#ffffff" opacity="0.9" />
 
-        <text x="320" y="86" font-size="16" font-family="Arial, sans-serif" font-weight="700" fill="#2f2e41">
+        <text x="330" y="86" font-size="16" font-family="Arial, sans-serif" font-weight="700" fill="#2f2e41">
             Messages
         </text>
 
-        <text x="320" y="104" font-size="11" font-family="Arial, sans-serif" fill="#8b8b98">
+        <text x="330" y="104" font-size="11" font-family="Arial, sans-serif" fill="#8b8b98">
             3 friends online
         </text>
 
         <!-- Chat Bubble 1 -->
-        <g transform="translate(270 135)">
+        <g transform="translate(280 135)">
             <rect width="170" height="52" rx="18" fill="#f1f3f9" />
 
             <circle cx="24" cy="26" r="12" fill="#6c63ff" opacity="0.15" />
@@ -113,7 +113,7 @@
         </g>
 
         <!-- Chat Bubble 2 -->
-        <g transform="translate(430 215)">
+        <g transform="translate(420 215)">
             <rect width="162" height="52" rx="18" fill="#6c63ff" />
 
             <circle cx="24" cy="26" r="12" fill="#ffffff" opacity="0.18" />
@@ -123,12 +123,12 @@
             </text>
 
             <text x="45" y="39" font-size="13" font-family="Arial, sans-serif" fill="#ffffff">
-                I'm doing great ✨
+                I'm doing great
             </text>
         </g>
 
         <!-- Chat Bubble 3 -->
-        <g transform="translate(270 395)">
+        <g transform="translate(280 395)">
             <rect width="195" height="52" rx="18" fill="#f1f3f9" />
 
             <circle cx="24" cy="26" r="12" fill="#06c" opacity="0.12" />
@@ -143,7 +143,7 @@
         </g>
 
         <!-- Chat Bubble 4 -->
-        <g transform="translate(415 475)">
+        <g transform="translate(408 475)">
             <rect width="175" height="52" rx="18" fill="#06c" />
 
             <circle cx="24" cy="26" r="12" fill="#ffffff" opacity="0.15" />
@@ -153,7 +153,7 @@
             </text>
 
             <text x="45" y="39" font-size="13" font-family="Arial, sans-serif" fill="#ffffff">
-                Sure, sounds good 🚀
+                Sure, sounds good
             </text>
         </g>
     
@@ -202,7 +202,7 @@
                 d="M20 0h138a20 20 0 0 1 20 20v40a20 20 0 0 1-20 20H74l-20 18 4-18H20A20 20 0 0 1 0 60V20A20 20 0 0 1 20 0Z"
                 fill="#ffffff" stroke="#e6e6e6" stroke-width="2" />
             <circle cx="24" cy="26" r="5" fill="#ff7a59" />
-            <text x="40" y="32" font-size="15" font-family="Arial, sans-serif" font-weight="700" fill="#2f2e41">Jhon
+            <text x="40" y="32" font-size="15" font-family="Arial, sans-serif" font-weight="700" fill="#2f2e41">John
                 Doe</text>
             <text x="40" y="51" font-size="11" font-family="Arial, sans-serif" fill="#8b8b98">Good Morning</text>
         </g>

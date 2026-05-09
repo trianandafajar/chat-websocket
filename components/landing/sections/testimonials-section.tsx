@@ -149,11 +149,11 @@ export function TestimonialsSection() {
         </div>
 
         {/* Testimonials list */}
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2">
           {quotes.map((t) => (
             <figure
               key={t.n}
-              className="group relative rounded-xl border border-border bg-card p-6 transition-colors hover:border-primary/40 hover:bg-background"
+              className="group relative rounded-xl border border-border bg-card p-5 transition-colors hover:border-primary/40 hover:bg-background"
             >
               <Quote
                 aria-hidden="true"
