@@ -235,7 +235,7 @@ export function ChatWindow({
               {myName || "You"}
             </span>
           </button>
-          {onTogglePanel && (
+          {onTogglePanel && !isAiChat && (
             <button
               type="button"
               onClick={onTogglePanel}
@@ -248,7 +248,7 @@ export function ChatWindow({
                   : "bg-transparent border-border text-muted-foreground hover:bg-muted hover:text-foreground"
               }`}
             >
-              {panelOpen ? <PanelRightClose  className="w-4 h-4" strokeWidth={1.75} /> : <PanelRightOpen  className="w-4 h-4" strokeWidth={1.75} />} 
+              {panelOpen ? <PanelRightClose  className="w-4 h-4" strokeWidth={1.75} /> : <PanelRightOpen  className="w-4 h-4" strokeWidth={1.75} />}
             </button>
           )}
         </div>

@@ -169,7 +169,7 @@ export function GroupInfoPanel({
         <div className="absolute top-0 left-1/2 -translate-x-1/2 h-full w-px group-hover:bg-primary/50 transition-colors" />
       </div>
 
-      <div className="flex items-center justify-between px-4 py-4 md:py-6 border-b border-border bg-card sticky top-0 z-10">
+      <div className="flex items-center justify-between px-4 py-4 md:py-5.5 border-b border-border bg-card sticky top-0 z-10">
         <h3 className="text-sm font-semibold text-foreground">Group Info</h3>
         {onClose && (
           <button
