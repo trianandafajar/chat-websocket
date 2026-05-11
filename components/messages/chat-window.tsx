@@ -1,6 +1,6 @@
 "use client"
 
-import { Hand, Users } from "lucide-react"
+import { Hand, PanelRightClose, PanelRightOpen, Users } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
@@ -40,6 +40,8 @@ interface ChatWindowProps {
   users: Participant[]
   onShowProfile: (userId: string) => void
   onShowGroupInfo: () => void
+  panelOpen?: boolean
+  onTogglePanel?: () => void
 }
 
 export function ChatWindow({
@@ -51,6 +53,8 @@ export function ChatWindow({
   users,
   onShowProfile,
   onShowGroupInfo,
+  panelOpen,
+  onTogglePanel,
 }: ChatWindowProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const { profile: myProfile } = useMyProfile()
@@ -159,8 +163,8 @@ export function ChatWindow({
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
-      <div className="px-4 md:px-6 py-4 border-b border-border bg-background flex items-center justify-between">
-        <div className="max-sm:ml-14 flex items-center gap-3 min-w-0">
+      <div className="px-4 md:px-6 py-4 border-b border-border bg-background flex items-center justify-between gap-2">
+        <div className="max-sm:ml-14 flex items-center gap-3 min-w-0 flex-1">
           {!isGroup && otherUser ? (
             isAiChat ? (
               <div className="min-w-0">
@@ -213,9 +217,9 @@ export function ChatWindow({
           )}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           {isGroup && (
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 font-mono text-[10.5px] uppercase tracking-[0.14em] text-primary">
+            <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 font-mono text-[10.5px] uppercase tracking-[0.14em] text-primary">
               <span className="h-1.5 w-1.5 rounded-full bg-primary" />
               Active
             </span>
@@ -231,6 +235,22 @@ export function ChatWindow({
               {myName || "You"}
             </span>
           </button>
+          {onTogglePanel && (
+            <button
+              type="button"
+              onClick={onTogglePanel}
+              aria-pressed={panelOpen}
+              aria-label={panelOpen ? "Hide details panel" : "Show details panel"}
+              title={panelOpen ? "Hide details panel" : "Show details panel"}
+              className={`cursor-pointer p-2 rounded-md border transition ${
+                panelOpen
+                  ? "bg-primary/10 border-primary/30 text-primary"
+                  : "bg-transparent border-border text-muted-foreground hover:bg-muted hover:text-foreground"
+              }`}
+            >
+              {panelOpen ? <PanelRightClose  className="w-4 h-4" strokeWidth={1.75} /> : <PanelRightOpen  className="w-4 h-4" strokeWidth={1.75} />} 
+            </button>
+          )}
         </div>
       </div>
 
@@ -295,14 +315,14 @@ export function ChatWindow({
                   )
                 )}
 
-                <div className="max-w-[74%]">
+                <div className="max-w-[78%] sm:max-w-[74%] min-w-0">
                   {isGroup && !isMe && sender && !sameSenderAsPrev && (
                     <p className="text-[11px] font-semibold text-foreground/70 mb-0.5 ml-1">
                       {sender.name ?? "Unknown"}
                     </p>
                   )}
                   <div
-                    className={`rounded-xl px-4 py-2.5 text-sm leading-relaxed ${
+                    className={`rounded-xl px-4 py-2.5 text-sm leading-relaxed wrap-break-word overflow-hidden ${
                       isMe
                         ? "bg-primary/15 text-foreground ring-1 ring-primary/25"
                         : "bg-muted/60 text-foreground"

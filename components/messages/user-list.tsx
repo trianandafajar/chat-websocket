@@ -95,7 +95,7 @@ export function UserList({
 
       {/* Header */}
       {collapsed ? (
-        <div className="py-4 flex justify-center border-b border-border">
+        <div className="py-4.5 flex justify-center border-b border-border">
           <button
             type="button"
             onClick={onExpand}

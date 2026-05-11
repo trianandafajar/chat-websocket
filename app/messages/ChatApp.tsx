@@ -876,7 +876,7 @@ export default function ChatApp() {
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 min-w-0 flex flex-col">
 
         {selectedSessionId ? (
           <>
@@ -889,6 +889,8 @@ export default function ChatApp() {
               users={users}
               onShowProfile={handleShowProfile}
               onShowGroupInfo={() => setShowProfilePanel(true)}
+              panelOpen={showProfilePanel}
+              onTogglePanel={() => setShowProfilePanel((v) => !v)}
             />
 
             <div className="border-t sticky bottom-0 bg-background/80 backdrop-blur-sm">
