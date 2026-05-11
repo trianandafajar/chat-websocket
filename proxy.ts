@@ -10,9 +10,6 @@ export async function proxy(req: NextRequest) {
     secret: process.env.NEXTAUTH_SECRET,
   })
 
-  console.log('token:', token);
-  
-
   const isAuthPage =
     pathname === "/register" ||
     pathname.startsWith("/auth")

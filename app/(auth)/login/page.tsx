@@ -6,8 +6,6 @@ export default async function Page() {
   const session = await auth();
 
   if(session) {
-    console.log('test');
-    
     redirect('/messages');
   } 
 

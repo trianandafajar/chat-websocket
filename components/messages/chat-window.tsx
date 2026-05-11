@@ -34,6 +34,7 @@ interface ChatWindowProps {
   typingUsers: string[]
   users: Participant[]
   onShowProfile: (userId: string) => void
+  onShowGroupInfo: () => void
 }
 
 export function ChatWindow({
@@ -44,6 +45,7 @@ export function ChatWindow({
   typingUsers,
   users,
   onShowProfile,
+  onShowGroupInfo,
 }: ChatWindowProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const { profile: myProfile } = useMyProfile()
@@ -52,12 +54,9 @@ export function ChatWindow({
   const myImage = myProfile?.picture ?? ""
 
   const session = sessions.find((s) => s.id === sessionId)
-
   if (!session) return null
 
   const isGroup = session.isGroup
-  if (!session) return null
-
 
   const otherUser = !isGroup
     ? session.participants?.find((p) => p.id !== currentUserId)
@@ -67,7 +66,16 @@ export function ChatWindow({
     ? session.title ?? "Group Chat"
     : otherUser?.name ?? "Unknown User"
 
-  const online = !isGroup && users.find((u) => u.id === otherUser?.id)?.isOnline
+  const isUserOnline = (id?: string | null) => {
+    if (!id) return false
+    if (id === currentUserId) return true
+    return !!users.find((u) => u.id === id)?.isOnline
+  }
+
+  const online = !isGroup && isUserOnline(otherUser?.id)
+  const onlineMembersCount = isGroup
+    ? session.participants?.filter((p) => isUserOnline(p.id)).length ?? 0
+    : 0
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -96,13 +104,28 @@ export function ChatWindow({
                 {online ? "Active now" : "Offline"}
               </p>
             </button>
+          ) : isGroup ? (
+            <button
+              type="button"
+              onClick={onShowGroupInfo}
+              className="group min-w-0 text-left cursor-pointer"
+              title="View group info"
+            >
+              <h2 className="text-[22px] font-semibold leading-none tracking-tight text-foreground truncate group-hover:text-primary transition-colors">
+                {title}
+              </h2>
+              <p className="font-mono text-[11px] text-muted-foreground mt-1">
+                {session.participants?.length ?? 0} members
+                {onlineMembersCount > 0 ? ` · ${onlineMembersCount} online` : ""}
+              </p>
+            </button>
           ) : (
             <div className="min-w-0">
               <h2 className="text-[22px] font-semibold leading-none tracking-tight text-foreground truncate">
                 {title}
               </h2>
               <p className="font-mono text-[11px] text-muted-foreground">
-                {isGroup ? "4 people online" : online ? "Active now" : "Offline"}
+                {online ? "Active now" : "Offline"}
               </p>
             </div>
           )}
@@ -142,37 +165,52 @@ export function ChatWindow({
             </div>
           </div>
         ) : (
-          messages.map((message) => {
+          messages.map((message, idx) => {
             const isMe = message.senderId === currentUserId
+            const sender = !isMe
+              ? session.participants?.find((p) => p.id === message.senderId)
+              : null
+            const prev = idx > 0 ? messages[idx - 1] : null
+            const sameSenderAsPrev =
+              prev && prev.senderId === message.senderId && !isMe
 
             return (
               <div
                 key={message.id}
-                className={`flex items-end gap-2.5 ${isMe ? "justify-end" : "justify-start"}`}
+                className={`flex items-end gap-2.5 ${isMe ? "justify-end" : "justify-start"} ${sameSenderAsPrev ? "mt-1" : ""}`}
               >
                 {!isMe && (
-                  isGroup ? (
+                  sender ? (
+                    sameSenderAsPrev ? (
+                      <div className="w-8 shrink-0" aria-hidden="true" />
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => onShowProfile(sender.id)}
+                        className="rounded-full shrink-0 cursor-pointer hover:ring-2 hover:ring-primary/40 transition"
+                        title={`View ${sender.name ?? "profile"}`}
+                        aria-label="View profile"
+                      >
+                        <Avatar
+                          name={sender.name}
+                          picture={sender.picture}
+                          size={32}
+                        />
+                      </button>
+                    )
+                  ) : (
                     <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-medium shrink-0 border border-border">
                       <Users className="w-3.5 h-3.5" strokeWidth={1.75} />
                     </div>
-                  ) : otherUser ? (
-                    <button
-                      type="button"
-                      onClick={() => onShowProfile(otherUser.id)}
-                      className="rounded-full shrink-0 cursor-pointer hover:ring-2 hover:ring-primary/40 transition"
-                      title="View profile"
-                      aria-label="View profile"
-                    >
-                      <Avatar
-                        name={otherUser.name}
-                        picture={otherUser.picture}
-                        size={32}
-                      />
-                    </button>
-                  ) : null
+                  )
                 )}
 
                 <div className="max-w-[74%]">
+                  {isGroup && !isMe && sender && !sameSenderAsPrev && (
+                    <p className="text-[11px] font-semibold text-foreground/70 mb-0.5 ml-1">
+                      {sender.name ?? "Unknown"}
+                    </p>
+                  )}
                   <div
                     className={`rounded-xl px-4 py-2.5 text-sm leading-relaxed ${
                       isMe

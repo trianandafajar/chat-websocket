@@ -4,6 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import { UserList } from "@/components/messages/user-list";
 import { ChatWindow } from "@/components/messages/chat-window";
 import { ProfilePanel } from "@/components/messages/profile-panel";
+import { GroupInfoPanel } from "@/components/messages/group-info-panel";
+import { NewChatModal } from "@/components/messages/new-chat-modal";
+import { CreateGroupModal } from "@/components/messages/create-group-modal";
 import { MyProfileProvider } from "@/components/messages/my-profile-context";
 import { Send, Menu, X, ChevronLeft, ChevronRight, UserCircle2 } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -29,6 +32,7 @@ type Session = {
   title?: string | null;
   lastMessage?: string | null;
   lastMessageAt?: string | null;
+  participantIds?: string[];
   participants?: User[];
 };
 
@@ -48,6 +52,8 @@ export default function ChatApp() {
   const [panelUserId, setPanelUserId] = useState<string | null>(null);
   const [profilePanelWidth, setProfilePanelWidth] = useState(300);
   const [isResizingProfile, setIsResizingProfile] = useState(false);
+  const [showNewChat, setShowNewChat] = useState(false);
+  const [showCreateGroup, setShowCreateGroup] = useState(false);
 
   const SIDEBAR_MIN = 220;
   const SIDEBAR_MAX = 480;
@@ -256,7 +262,6 @@ export default function ChatApp() {
       wsRef.current = ws;
 
       ws.onopen = () => {
-        console.log("✅ WS connected");
         setWsAlive(true);
         lastPongRef.current = Date.now();
 
@@ -271,7 +276,6 @@ export default function ChatApp() {
         pingTimerRef.current = window.setInterval(() => {
           if (wsRef.current?.readyState === WebSocket.OPEN) {
             wsRef.current.send(JSON.stringify({ type: "ping" }));
-            console.log("ping");
 
             if (Date.now() - lastPongRef.current > 60_000) {
               console.warn("⚠️ WS timeout, reconnecting...");
@@ -314,12 +318,10 @@ export default function ChatApp() {
           }
 
           if (data.type === "presence") {
-            console.log("👤 presence", data);
             setUsers((prev) => {
               const updated = prev.map((u) =>
                 u.id === data.userId ? { ...u, isOnline: data.online } : u
               );
-              console.log("Updated users:", updated);
               return updated;
             });
             // Update sessions participants
@@ -345,13 +347,44 @@ export default function ChatApp() {
               return newSet;
             });
           }
+
+          if (data.type === "session-changed") {
+            const incoming: Session = data.session;
+            const me = session?.user?.id;
+            const stillMember = me
+              ? (incoming.participantIds ?? []).includes(me)
+              : false;
+
+            if (!stillMember) {
+              // I was removed from this group — drop it locally
+              setSessions((prev) => prev.filter((s) => s.id !== incoming.id));
+              setMessages((prev) => {
+                const next = { ...prev };
+                delete next[incoming.id];
+                return next;
+              });
+              setSelectedSessionId((curr) =>
+                curr === incoming.id ? null : curr,
+              );
+              return;
+            }
+
+            setSessions((prev) => {
+              const exists = prev.find((s) => s.id === incoming.id);
+              if (exists) {
+                return prev.map((s) =>
+                  s.id === incoming.id ? { ...s, ...incoming } : s,
+                );
+              }
+              return [incoming, ...prev];
+            });
+          }
         } catch (e) {
           console.error("WS message error", e);
         }
       };
 
       ws.onclose = () => {
-        console.log("WS closed");
         setWsAlive(false);
 
         if (reconnectTimerRef.current)
@@ -418,6 +451,100 @@ export default function ChatApp() {
     setShowMobileMenu(false);
 
     return enriched;
+  };
+
+  const notifySessionChanged = (sessionId: string, removedUserIds?: string[]) => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(
+        JSON.stringify({
+          type: "session-changed",
+          sessionId,
+          ...(removedUserIds?.length ? { removedUserIds } : {}),
+        }),
+      );
+    }
+  };
+
+  /**
+   * CREATE GROUP
+   */
+  const createGroup = async (title: string, userIds: string[]) => {
+    const res = await fetch("/api/sessions/group", {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title, userIds }),
+    });
+
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      throw new Error(text || "Failed to create group");
+    }
+
+    const newSession: Session = await res.json();
+
+    setSessions((prev) => {
+      const exists = prev.find((s) => s.id === newSession.id);
+      if (exists) {
+        return prev.map((s) => (s.id === newSession.id ? newSession : s));
+      }
+      return [newSession, ...prev];
+    });
+
+    setSelectedSessionId(newSession.id);
+    setShowMobileMenu(false);
+    notifySessionChanged(newSession.id);
+  };
+
+  /**
+   * JOIN GROUP (auto-add current user to a discoverable group)
+   */
+  const joinGroup = async (sessionId: string) => {
+    const res = await fetch(`/api/sessions/${sessionId}/join`, {
+      method: "POST",
+      credentials: "include",
+    });
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      throw new Error(text || "Failed to join group");
+    }
+    const joined: Session = await res.json();
+    setSessions((prev) => {
+      const exists = prev.find((s) => s.id === joined.id);
+      if (exists) {
+        return prev.map((s) => (s.id === joined.id ? { ...s, ...joined } : s));
+      }
+      return [joined, ...prev];
+    });
+    setSelectedSessionId(joined.id);
+    setShowMobileMenu(false);
+    notifySessionChanged(joined.id);
+  };
+
+  /**
+   * UPDATE GROUP (title / add / remove members)
+   */
+  const updateGroup = async (
+    sessionId: string,
+    patch: { title?: string; addUserIds?: string[]; removeUserIds?: string[] },
+  ) => {
+    const res = await fetch(`/api/sessions/${sessionId}`, {
+      method: "PATCH",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(patch),
+    });
+
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      throw new Error(text || "Failed to update group");
+    }
+
+    const updated: Session = await res.json();
+    setSessions((prev) =>
+      prev.map((s) => (s.id === updated.id ? { ...s, ...updated } : s)),
+    );
+    notifySessionChanged(updated.id, patch.removeUserIds);
   };
 
   /**
@@ -502,10 +629,7 @@ export default function ChatApp() {
           }}
           currentUserId={session?.user?.id}
           collapsed={sidebarCollapsed}
-          onStartChat={async (userId) => {
-            await startChat(userId);
-            setShowMobileMenu(false);
-          }}
+          onOpenNewChat={() => setShowNewChat(true)}
         />
 
         <div
@@ -540,10 +664,11 @@ export default function ChatApp() {
               sessionId={selectedSessionId}
               messages={messages[selectedSessionId] ?? []}
               sessions={sessions}
-              currentUserId={session?.user?.id}
+              currentUserId={session?.user?.id ?? ""}
               typingUsers={Array.from(typingUsers)}
               users={users}
               onShowProfile={handleShowProfile}
+              onShowGroupInfo={() => setShowProfilePanel(true)}
             />
 
             <div className="p-4 border-t flex gap-3 items-end sticky bottom-0 bg-background/80 backdrop-blur-sm">
@@ -598,23 +723,83 @@ export default function ChatApp() {
         )}
       </div>
 
-      {showProfilePanel && panelUserId ? (
-        <>
-          <div
-            className="md:hidden fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px]"
-            onClick={() => setShowProfilePanel(false)}
-            aria-hidden="true"
-          />
-          <ProfilePanel
-            userId={panelUserId}
-            isSelf={panelUserId === session?.user?.id}
-            onClose={() => setShowProfilePanel(false)}
-            width={profilePanelWidth}
-            onResizeStart={startProfileResize}
-            isResizing={isResizingProfile}
-          />
-        </>
-      ) : null}
+      {showProfilePanel && (() => {
+        const activeSession = selectedSessionId
+          ? sessions.find((s) => s.id === selectedSessionId)
+          : undefined;
+
+        if (activeSession?.isGroup) {
+          return (
+            <>
+              <div
+                className="md:hidden fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px]"
+                onClick={() => setShowProfilePanel(false)}
+                aria-hidden="true"
+              />
+              <GroupInfoPanel
+                sessionId={activeSession.id}
+                session={activeSession}
+                currentUserId={session?.user?.id}
+                allUsers={users}
+                onClose={() => setShowProfilePanel(false)}
+                onUpdate={updateGroup}
+                width={profilePanelWidth}
+                onResizeStart={startProfileResize}
+                isResizing={isResizingProfile}
+              />
+            </>
+          );
+        }
+
+        if (panelUserId) {
+          return (
+            <>
+              <div
+                className="md:hidden fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px]"
+                onClick={() => setShowProfilePanel(false)}
+                aria-hidden="true"
+              />
+              <ProfilePanel
+                userId={panelUserId}
+                isSelf={panelUserId === session?.user?.id}
+                onClose={() => setShowProfilePanel(false)}
+                width={profilePanelWidth}
+                onResizeStart={startProfileResize}
+                isResizing={isResizingProfile}
+              />
+            </>
+          );
+        }
+
+        return null;
+      })()}
+
+      {showNewChat && (
+        <NewChatModal
+          users={users}
+          onClose={() => setShowNewChat(false)}
+          onStartChat={async (userId) => {
+            await startChat(userId);
+          }}
+          onJoinGroup={async (groupId) => {
+            await joinGroup(groupId);
+          }}
+          onOpenCreateGroup={() => {
+            setShowNewChat(false);
+            setShowCreateGroup(true);
+          }}
+        />
+      )}
+
+      {showCreateGroup && (
+        <CreateGroupModal
+          users={users}
+          onClose={() => setShowCreateGroup(false)}
+          onCreate={async (title, userIds) => {
+            await createGroup(title, userIds);
+          }}
+        />
+      )}
     </div>
     </MyProfileProvider>
   );

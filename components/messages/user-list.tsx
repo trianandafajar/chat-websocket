@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { Inbox, Search, Plus, X, Users } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Inbox, Plus, Search, Users } from "lucide-react";
 import { Avatar } from "./avatar";
 
 interface Participant {
@@ -32,23 +32,20 @@ interface UserListProps {
   users: User[];
   selectedSessionId: string | null;
   onSelectSession: (sessionId: string) => void;
-  onStartChat: (userId: string) => void;
+  onOpenNewChat: () => void;
   collapsed?: boolean;
   currentUserId?: string | null;
 }
 
 export function UserList({
   sessions,
-  users,
   selectedSessionId,
   onSelectSession,
-  onStartChat,
+  onOpenNewChat,
   collapsed,
   currentUserId,
 }: UserListProps) {
   const [search, setSearch] = useState("");
-  const [showUsers, setShowUsers] = useState(false);
-  const [modalQuery, setModalQuery] = useState("");
 
   const filteredSessions = useMemo(() => {
     const q = search.toLowerCase().trim();
@@ -81,7 +78,7 @@ export function UserList({
       {/* New Chat Button */}
       {!collapsed && (
         <button
-          onClick={() => setShowUsers(!showUsers)}
+          onClick={onOpenNewChat}
           className="fixed bottom-6 left-6 z-50 w-14 h-14 rounded-full bg-primary hover:bg-accent text-primary-foreground flex items-center justify-center shadow-lg hover:scale-110 active:scale-95 transition cursor-pointer duration-200"
           aria-label="New Chat"
           title="Start new chat"
@@ -105,113 +102,6 @@ export function UserList({
         </div>
       )}
 
-      {/* USER PICKER MODAL */}
-      {showUsers && !collapsed && (
-        <div className="fixed w-[100vw] inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="relative w-[min(500px,95vw)] bg-white rounded-2xl shadow-2xl overflow-hidden border border-border">
-            {/* Modal Header */}
-            <div className="flex gap-2 items-center justify-between p-4 border-b">
-              <div className="relative w-full">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <input
-                  value={modalQuery}
-                  onChange={(e) => setModalQuery(e.target.value)}
-                  placeholder="Search users..."
-                  className="w-full pl-10 pr-4 py-2.5 text-sm bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
-                />
-              </div>
-              <button
-                className="p-2 rounded-lg cursor-pointer hover:bg-muted transition"
-                onClick={() => setShowUsers(false)}
-                aria-label="Close"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-
-            <div className="flex items-center justify-between px-4 pt-4 pb-2">
-              <h2 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Recommendations
-              </h2>
-              <span className="text-[11px] font-medium text-muted-foreground/70">
-                {
-                  users.filter((u) =>
-                    (u.name ?? "")
-                      .toLowerCase()
-                      .includes(modalQuery.toLowerCase().trim()),
-                  ).length
-                }
-              </span>
-            </div>
-
-            {/* User List */}
-            <div className="max-h-[60vh] min-h-[60vh] overflow-y-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
-              {users.filter((u) =>
-                (u.name ?? "")
-                  .toLowerCase()
-                  .includes(modalQuery.toLowerCase().trim()),
-              ).length === 0 ? (
-                <p className="p-8 text-sm text-muted-foreground text-center">
-                  No users found
-                </p>
-              ) : (
-                users
-                  .filter((u) =>
-                    (u.name ?? "")
-                      .toLowerCase()
-                      .includes(modalQuery.toLowerCase().trim()),
-                  )
-                  .map((user) => (
-                    <div
-                      key={user.id}
-                      className="w-full flex items-center justify-between px-4 py-4 text-left border-b border-border/30 transition"
-                    >
-                      <div className="flex items-center gap-3 flex-1 min-w-0 text-left">
-                        <Avatar
-                          name={user.name}
-                          picture={user.picture}
-                          size={40}
-                        />
-                        <div className="min-w-0 text-left">
-                          <div className="font-medium text-sm text-foreground truncate">
-                            {user.name ?? "Unknown"}
-                          </div>
-                          <div
-                            className={`text-xs ${user.isOnline ? "text-green-600" : "text-muted-foreground"}`}
-                          >
-                            {user.isOnline ? "● Online" : "Offline"}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-3 ml-3">
-                        <span
-                          className={`w-2.5 h-2.5 rounded-full ${user.isOnline ? "bg-green-500" : "bg-muted-foreground"}`}
-                        />
-                        <button
-                          className="text-sm font-medium cursor-pointer hover:bg-primary/90 bg-primary text-primary-foreground px-3.5 py-1.5 rounded-lg transition"
-                          onClick={async (e) => {
-                            e.stopPropagation();
-                            try {
-                              await onStartChat(user.id);
-                              setShowUsers(false);
-                            } catch (err) {
-                              console.error("Start chat error", err);
-                              alert("Failed to start chat.");
-                            }
-                          }}
-                        >
-                          Chat
-                        </button>
-                      </div>
-                    </div>
-                  ))
-              )}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* SESSIONS LIST */}
       <div className="flex-1 overflow-y-auto max-h-[calc(100vh-6rem)] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
