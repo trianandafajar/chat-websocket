@@ -1,9 +1,10 @@
 "use client"
 
 import { Hand, Users } from "lucide-react"
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useMyProfile } from "./my-profile-context"
 import { Avatar } from "./avatar"
+import { TranslateButton, type TranslateResult } from "./translate-button"
 
 interface Message {
   id: string
@@ -49,6 +50,17 @@ export function ChatWindow({
 }: ChatWindowProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const { profile: myProfile } = useMyProfile()
+  const [translations, setTranslations] = useState<Record<string, TranslateResult | null>>({})
+
+  const setTranslationFor = (messageId: string, result: TranslateResult | null) => {
+    setTranslations((prev) => {
+      if (!result) {
+        const { [messageId]: _drop, ...rest } = prev
+        return rest
+      }
+      return { ...prev, [messageId]: result }
+    })
+  }
 
   const myName = myProfile?.name ?? ""
   const myImage = myProfile?.picture ?? ""
@@ -219,18 +231,42 @@ export function ChatWindow({
                     }`}
                   >
                     <p className="break-words">{message.text}</p>
+                    {translations[message.id] && (
+                      <div
+                        className={`mt-2 pt-2 border-t ${
+                          isMe ? "border-primary/20" : "border-border/60"
+                        }`}
+                      >
+                        <p className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-0.5">
+                          {translations[message.id]?.detectedSource
+                            ? `${translations[message.id]?.detectedSource?.toUpperCase()} → ${translations[message.id]?.targetCode.toUpperCase()}`
+                            : translations[message.id]?.targetCode.toUpperCase()}
+                        </p>
+                        <p className="italic break-words text-foreground/90">
+                          {translations[message.id]?.translatedText}
+                        </p>
+                      </div>
+                    )}
                   </div>
-                  <p
-                    className={`mt-1 font-mono text-[11px] ${
-                      isMe ? "text-right text-muted-foreground" : "text-muted-foreground"
+                  <div
+                    className={`mt-1 flex items-center gap-2 ${
+                      isMe ? "justify-end" : "justify-start"
                     }`}
                   >
-                    {isMe ? "you - " : ""}
-                    {new Date(message.createdAt).toLocaleTimeString("id-ID", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </p>
+                    <TranslateButton
+                      text={message.text}
+                      align={isMe ? "end" : "start"}
+                      cached={translations[message.id] ?? null}
+                      onCache={(result) => setTranslationFor(message.id, result)}
+                    />
+                    <span className="font-mono text-[11px] text-muted-foreground">
+                      {isMe ? "you · " : ""}
+                      {new Date(message.createdAt).toLocaleTimeString("id-ID", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                  </div>
                 </div>
               </div>
             )
