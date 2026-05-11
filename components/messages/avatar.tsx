@@ -19,7 +19,7 @@ function isValidPicture(picture?: string | null): boolean {
   const trimmed = picture.trim();
   if (!trimmed) return false;
   if (trimmed.includes("via.placeholder.com")) return false;
-  return /^(https?:\/\/|data:image\/)/i.test(trimmed);
+  return /^(https?:\/\/|data:image\/|\/)/i.test(trimmed);
 }
 
 export function Avatar({ name, picture, size = 40, className = "" }: AvatarProps) {

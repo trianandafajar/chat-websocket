@@ -34,6 +34,7 @@ interface UserListProps {
   selectedSessionId: string | null;
   onSelectSession: (sessionId: string) => void;
   onOpenNewChat: () => void;
+  onExpand?: () => void;
   collapsed?: boolean;
   currentUserId?: string | null;
 }
@@ -43,6 +44,7 @@ export function UserList({
   selectedSessionId,
   onSelectSession,
   onOpenNewChat,
+  onExpand,
   collapsed,
   currentUserId,
 }: UserListProps) {
@@ -92,7 +94,19 @@ export function UserList({
       )}
 
       {/* Header */}
-      {!collapsed && (
+      {collapsed ? (
+        <div className="py-4 flex justify-center border-b border-border">
+          <button
+            type="button"
+            onClick={onExpand}
+            className="w-10 h-10 rounded-full flex items-center justify-center bg-muted/40 hover:bg-muted text-foreground border border-border transition cursor-pointer"
+            aria-label="Search conversations (expand sidebar)"
+            title="Search"
+          >
+            <Search className="w-4 h-4" />
+          </button>
+        </div>
+      ) : (
         <div className="p-[calc(var(--spacing)*4.3)] border-b border-border">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />

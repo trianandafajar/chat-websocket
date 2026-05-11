@@ -329,10 +329,10 @@ export function ChatWindow({
                       isMe ? "justify-end" : "justify-start"
                     }`}
                   >
-                    {message.text.trim() && (
+                    {!isMe && message.text.trim() && (
                       <TranslateButton
                         text={message.text}
-                        align={isMe ? "end" : "start"}
+                        align="start"
                         cached={translations[message.id] ?? null}
                         onCache={(result) => setTranslationFor(message.id, result)}
                       />

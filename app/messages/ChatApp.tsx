@@ -10,6 +10,7 @@ import { CreateGroupModal } from "@/components/messages/create-group-modal";
 import { MyProfileProvider } from "@/components/messages/my-profile-context";
 import { Send, Menu, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { useSession } from "next-auth/react";
+import { TranslateButton, type TranslateResult } from "@/components/messages/translate-button";
 
 type User = {
   id: string;
@@ -67,7 +68,7 @@ function createAiSession(currentUser?: User | null, messages: Message[] = []): S
       {
         id: AI_USER_ID,
         name: "Chattie AI",
-        picture: null,
+        picture: '/chattieAi.png',
         isOnline: true,
         isAI: true,
       },
@@ -94,6 +95,7 @@ export default function ChatApp() {
   const [showNewChat, setShowNewChat] = useState(false);
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [aiIsResponding, setAiIsResponding] = useState(false);
+  const [composeTranslation, setComposeTranslation] = useState<TranslateResult | null>(null);
 
   const SIDEBAR_MIN = 220;
   const SIDEBAR_MAX = 480;
@@ -202,6 +204,15 @@ export default function ChatApp() {
     el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
   }, [inputValue]);
 
+  // Drop translation preview when input is cleared or session switches
+  useEffect(() => {
+    if (!inputValue.trim()) setComposeTranslation(null);
+  }, [inputValue]);
+
+  useEffect(() => {
+    setComposeTranslation(null);
+  }, [selectedSessionId]);
+
 
   const { data: session } = useSession();
   const aiMessages = messages[AI_SESSION_ID] ?? [];
@@ -305,7 +316,6 @@ export default function ChatApp() {
 
       const target = e.target as Node;
 
-      // ignore klik hamburger
       if (toggleRef.current?.contains(target)) return;
 
       if (menuRef.current && !menuRef.current.contains(target)) {
@@ -839,6 +849,7 @@ export default function ChatApp() {
           currentUserId={session?.user?.id}
           collapsed={sidebarCollapsed}
           onOpenNewChat={() => setShowNewChat(true)}
+          onExpand={() => setSidebarCollapsed(false)}
         />
 
         <div
@@ -880,52 +891,103 @@ export default function ChatApp() {
               onShowGroupInfo={() => setShowProfilePanel(true)}
             />
 
-            <div className="p-4 border-t flex gap-3 items-end sticky bottom-0 bg-background/80 backdrop-blur-sm">
-              <textarea
-                ref={inputRef}
-                value={inputValue}
-                rows={1}
-                onChange={(e) => setInputValue(e.target.value)}
-                onInput={() => {
-                  if (
-                    selectedSessionId !== AI_SESSION_ID &&
-                    wsRef.current?.readyState === WebSocket.OPEN &&
-                    selectedSessionId
-                  ) {
-                    wsRef.current.send(JSON.stringify({
-                      type: "typing",
-                      sessionId: selectedSessionId,
-                      userId: session?.user?.id,
-                    }));
-                    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+            <div className="border-t sticky bottom-0 bg-background/80 backdrop-blur-sm">
+              {composeTranslation && (
+                <div className="mx-4 mt-3 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2">
+                  <div className="flex items-center justify-between gap-2 mb-1">
+                    <p className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+                      {composeTranslation.detectedSource
+                        ? `${composeTranslation.detectedSource.toUpperCase()} → ${composeTranslation.targetCode.toUpperCase()}`
+                        : composeTranslation.targetCode.toUpperCase()}
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setInputValue(composeTranslation.translatedText);
+                          setComposeTranslation(null);
+                          inputRef.current?.focus();
+                        }}
+                        className="text-[11px] font-semibold text-primary hover:text-primary/80 transition cursor-pointer"
+                      >
+                        Use
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setComposeTranslation(null)}
+                        className="text-muted-foreground hover:text-foreground transition cursor-pointer"
+                        aria-label="Dismiss translation"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                  <p className="text-sm text-foreground italic wrap-break-word whitespace-pre-wrap">
+                    {composeTranslation.translatedText}
+                  </p>
+                </div>
+              )}
 
-                    typingTimeoutRef.current = window.setTimeout(() => {
-                      if (wsRef.current?.readyState === WebSocket.OPEN && selectedSessionId) {
+              <div className="p-4 flex gap-3 items-end">
+                <div className="flex-1 flex flex-col gap-1.5">
+                  <textarea
+                    ref={inputRef}
+                    value={inputValue}
+                    rows={1}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    onInput={() => {
+                      if (
+                        selectedSessionId !== AI_SESSION_ID &&
+                        wsRef.current?.readyState === WebSocket.OPEN &&
+                        selectedSessionId
+                      ) {
                         wsRef.current.send(JSON.stringify({
-                          type: "stop-typing",
+                          type: "typing",
                           sessionId: selectedSessionId,
                           userId: session?.user?.id,
                         }));
+                        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+
+                        typingTimeoutRef.current = window.setTimeout(() => {
+                          if (wsRef.current?.readyState === WebSocket.OPEN && selectedSessionId) {
+                            wsRef.current.send(JSON.stringify({
+                              type: "stop-typing",
+                              sessionId: selectedSessionId,
+                              userId: session?.user?.id,
+                            }));
+                          }
+                        }, 2000);
                       }
-                    }, 2000);
-                  }
-                }}
-                className="flex-1 resize-none border border-border bg-input rounded-lg px-4 py-3 text-sm leading-5 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition max-h-40 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
-                placeholder={selectedSessionId === AI_SESSION_ID ? "Ask Chattie AI anything..." : "Type your message..."}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSendMessage();
-                  }
-                }}
-              />
-              <button
-                onClick={handleSendMessage}
-                disabled={selectedSessionId === AI_SESSION_ID && aiIsResponding}
-                className="bg-primary hover:bg-accent disabled:opacity-60 disabled:cursor-not-allowed text-primary-foreground px-4 py-3 rounded-lg cursor-pointer transition-colors duration-200 flex items-center justify-center shrink-0"
-              >
-                <Send size={18} />
-              </button>
+                    }}
+                    className="resize-none border border-border bg-input rounded-lg px-4 py-3 text-sm leading-5 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition max-h-40 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+                    placeholder={selectedSessionId === AI_SESSION_ID ? "Ask Chattie AI anything..." : "Type your message..."}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSendMessage();
+                      }
+                    }}
+                  />
+                  {inputValue.trim().length > 0 && (
+                    <div className="px-1">
+                      <TranslateButton
+                        text={inputValue}
+                        align="start"
+                        direction="up"
+                        cached={composeTranslation}
+                        onCache={setComposeTranslation}
+                      />
+                    </div>
+                  )}
+                </div>
+                <button
+                  onClick={handleSendMessage}
+                  disabled={selectedSessionId === AI_SESSION_ID && aiIsResponding}
+                  className="bg-primary hover:bg-accent disabled:opacity-60 disabled:cursor-not-allowed text-primary-foreground px-4 py-3 rounded-lg cursor-pointer transition-colors duration-200 flex items-center justify-center shrink-0"
+                >
+                  <Send size={18} />
+                </button>
+              </div>
             </div>
           </>
         ) : (

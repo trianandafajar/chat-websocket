@@ -25,6 +25,7 @@ interface TranslateResult {
 interface TranslateButtonProps {
   text: string;
   align?: "start" | "end";
+  direction?: "up" | "down";
   /** Cached result + setter, owned by parent so it persists per-message */
   cached?: TranslateResult | null;
   onCache?: (result: TranslateResult | null) => void;
@@ -33,6 +34,7 @@ interface TranslateButtonProps {
 export function TranslateButton({
   text,
   align = "start",
+  direction = "down",
   cached,
   onCache,
 }: TranslateButtonProps) {
@@ -118,9 +120,9 @@ export function TranslateButton({
 
       {open && (
         <div
-          className={`absolute z-30 mt-1 w-44 max-h-64 overflow-y-auto rounded-lg border border-border bg-card shadow-lg ${
+          className={`absolute z-30 w-44 max-h-64 overflow-y-auto rounded-lg border border-border bg-card shadow-lg ${
             align === "end" ? "right-0" : "left-0"
-          } [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full`}
+          } ${direction === "up" ? "bottom-full mb-1" : "top-full mt-1"} [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full`}
         >
           {LANGUAGES.map((lang) => {
             const active = cached?.targetCode === lang.code;
