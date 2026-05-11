@@ -52,9 +52,12 @@ export function ChatWindow({
   const myImage = myProfile?.picture ?? ""
 
   const session = sessions.find((s) => s.id === sessionId)
+
   if (!session) return null
 
   const isGroup = session.isGroup
+  if (!session) return null
+
 
   const otherUser = !isGroup
     ? session.participants?.find((p) => p.id !== currentUserId)

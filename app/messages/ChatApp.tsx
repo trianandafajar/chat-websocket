@@ -46,21 +46,39 @@ export default function ChatApp() {
   const [isResizing, setIsResizing] = useState(false);
   const [showProfilePanel, setShowProfilePanel] = useState(true);
   const [panelUserId, setPanelUserId] = useState<string | null>(null);
+  const [profilePanelWidth, setProfilePanelWidth] = useState(300);
+  const [isResizingProfile, setIsResizingProfile] = useState(false);
 
   const SIDEBAR_MIN = 220;
   const SIDEBAR_MAX = 480;
   const SIDEBAR_COLLAPSED = 72;
+  const PROFILE_PANEL_MIN = 260;
+  const PROFILE_PANEL_MAX = 480;
 
   useEffect(() => {
     const w = Number(localStorage.getItem("sidebarWidth"));
     if (w) setSidebarWidth(Math.min(SIDEBAR_MAX, Math.max(SIDEBAR_MIN, w)));
     if (localStorage.getItem("sidebarCollapsed") === "1") setSidebarCollapsed(true);
-    if (localStorage.getItem("profilePanelHidden") === "1") setShowProfilePanel(false);
+
+    const pw = Number(localStorage.getItem("profilePanelWidth"));
+    if (pw) setProfilePanelWidth(Math.min(PROFILE_PANEL_MAX, Math.max(PROFILE_PANEL_MIN, pw)));
+
+    const stored = localStorage.getItem("profilePanelHidden");
+    if (stored === "1") {
+      setShowProfilePanel(false);
+    } else if (stored === null && typeof window !== "undefined") {
+      // default: hide on mobile, show on desktop
+      setShowProfilePanel(window.matchMedia("(min-width: 768px)").matches);
+    }
   }, []);
 
   useEffect(() => {
     localStorage.setItem("profilePanelHidden", showProfilePanel ? "0" : "1");
   }, [showProfilePanel]);
+
+  useEffect(() => {
+    localStorage.setItem("profilePanelWidth", String(profilePanelWidth));
+  }, [profilePanelWidth]);
 
   useEffect(() => {
     if (!selectedSessionId) {
@@ -103,6 +121,30 @@ export default function ChatApp() {
     };
     const onUp = () => {
       setIsResizing(false);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  };
+
+  const startProfileResize = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizingProfile(true);
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+
+    const onMove = (ev: MouseEvent) => {
+      const next = Math.min(
+        PROFILE_PANEL_MAX,
+        Math.max(PROFILE_PANEL_MIN, window.innerWidth - ev.clientX)
+      );
+      setProfilePanelWidth(next);
+    };
+    const onUp = () => {
+      setIsResizingProfile(false);
       document.body.style.cursor = "";
       document.body.style.userSelect = "";
       window.removeEventListener("mousemove", onMove);
@@ -419,13 +461,21 @@ export default function ChatApp() {
         {showMobileMenu ? <X /> : <Menu />}
       </button>
 
+      {showMobileMenu && (
+        <div
+          className="md:hidden fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px]"
+          onClick={() => setShowMobileMenu(false)}
+          aria-hidden="true"
+        />
+      )}
+
       <div
         ref={menuRef}
         style={{ width: sidebarCollapsed ? SIDEBAR_COLLAPSED : sidebarWidth }}
-        className={`relative shrink-0 border-r bg-card/90 backdrop-blur-md fixed md:relative top-0 h-full z-50 ease-out md:translate-x-0 md:opacity-100 ${isResizing ? "" : "transition-[transform,opacity,width] duration-300"}
+        className={`shrink-0 border-r bg-card/90 backdrop-blur-md max-md:fixed max-md:inset-y-0 max-md:left-0 max-md:z-50 max-md:max-w-[85vw] md:relative md:translate-x-0 md:opacity-100 ${isResizing ? "" : "transition-[transform,opacity,width] duration-300"}
           ${showMobileMenu
-            ? "translate-x-0 opacity-100"
-            : "-translate-x-full opacity-0"
+            ? "max-md:translate-x-0 max-md:opacity-100"
+            : "max-md:-translate-x-full max-md:opacity-0"
           }
         `}
       >
@@ -549,11 +599,21 @@ export default function ChatApp() {
       </div>
 
       {showProfilePanel && panelUserId ? (
-        <ProfilePanel
-          userId={panelUserId}
-          isSelf={panelUserId === session?.user?.id}
-          onClose={() => setShowProfilePanel(false)}
-        />
+        <>
+          <div
+            className="md:hidden fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px]"
+            onClick={() => setShowProfilePanel(false)}
+            aria-hidden="true"
+          />
+          <ProfilePanel
+            userId={panelUserId}
+            isSelf={panelUserId === session?.user?.id}
+            onClose={() => setShowProfilePanel(false)}
+            width={profilePanelWidth}
+            onResizeStart={startProfileResize}
+            isResizing={isResizingProfile}
+          />
+        </>
       ) : null}
     </div>
     </MyProfileProvider>

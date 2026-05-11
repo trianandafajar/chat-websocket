@@ -46,9 +46,19 @@ interface ProfilePanelProps {
   userId: string | null;
   isSelf: boolean;
   onClose?: () => void;
+  width?: number;
+  onResizeStart?: (e: React.MouseEvent) => void;
+  isResizing?: boolean;
 }
 
-export function ProfilePanel({ userId, isSelf, onClose }: ProfilePanelProps) {
+export function ProfilePanel({
+  userId,
+  isSelf,
+  onClose,
+  width = 300,
+  onResizeStart,
+  isResizing,
+}: ProfilePanelProps) {
   const { update } = useSession();
   const { refresh: refreshMyProfile } = useMyProfile();
 
@@ -185,8 +195,19 @@ export function ProfilePanel({ userId, isSelf, onClose }: ProfilePanelProps) {
     : profile?.picture || "";
 
   return (
-    <aside className="hidden md:flex w-[300px] shrink-0 border-l border-border bg-card/40 flex-col">
-      <div className="flex items-center justify-between px-4 py-6 border-b border-border">
+    <aside
+      style={{ width }}
+      className={`shrink-0 border-l border-border bg-card flex flex-col max-md:fixed max-md:inset-y-0 max-md:right-0 max-md:z-50 max-md:w-[min(92vw,380px)]! max-md:shadow-2xl md:relative ${isResizing ? "" : "transition-[width] duration-300"}`}
+    >
+      <div
+        onMouseDown={onResizeStart}
+        className="hidden md:block absolute top-0 -left-1 h-full w-2 cursor-col-resize group z-10"
+        aria-hidden="true"
+      >
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 h-full w-px group-hover:bg-primary/50 transition-colors" />
+      </div>
+
+      <div className="flex items-center justify-between px-4 py-4 md:py-5.5 border-b border-border bg-card sticky top-0 z-10">
         <h3 className="text-sm font-semibold text-foreground">
           {isSelf ? "Your Profile" : "Profile"}
         </h3>
@@ -194,11 +215,11 @@ export function ProfilePanel({ userId, isSelf, onClose }: ProfilePanelProps) {
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-md hover:bg-muted transition cursor-pointer"
+            className="p-2 rounded-full hover:bg-muted transition cursor-pointer"
             aria-label="Hide profile"
             title="Hide"
           >
-            <X className="w-4 h-4" />
+            <X className="w-5 h-5 md:w-4 md:h-4" />
           </button>
         )}
       </div>
@@ -238,7 +259,7 @@ export function ProfilePanel({ userId, isSelf, onClose }: ProfilePanelProps) {
         </div>
       ) : (
         <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
-          <div className="flex flex-col items-center px-6 py-6 border-b border-border bg-gradient-to-br from-white to-blue-50">
+          <div className="flex flex-col items-center px-6 py-8 border-b border-border bg-muted/30">
             <div className="relative">
               <div className="w-24 h-24 rounded-full bg-primary/15 ring-4 ring-primary/20 flex items-center justify-center text-3xl font-semibold text-primary overflow-hidden">
                 {previewSrc ? (
