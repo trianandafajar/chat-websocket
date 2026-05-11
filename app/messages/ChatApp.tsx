@@ -930,6 +930,17 @@ export default function ChatApp() {
 
               <div className="p-4 flex gap-3 items-end">
                 <div className="flex-1 flex flex-col gap-1.5">
+                  {inputValue.trim().length > 0 && (
+                    <div className="px-1">
+                      <TranslateButton
+                        text={inputValue}
+                        align="start"
+                        direction="up"
+                        cached={composeTranslation}
+                        onCache={setComposeTranslation}
+                      />
+                    </div>
+                  )}
                   <textarea
                     ref={inputRef}
                     value={inputValue}
@@ -968,17 +979,6 @@ export default function ChatApp() {
                       }
                     }}
                   />
-                  {inputValue.trim().length > 0 && (
-                    <div className="px-1">
-                      <TranslateButton
-                        text={inputValue}
-                        align="start"
-                        direction="up"
-                        cached={composeTranslation}
-                        onCache={setComposeTranslation}
-                      />
-                    </div>
-                  )}
                 </div>
                 <button
                   onClick={handleSendMessage}
