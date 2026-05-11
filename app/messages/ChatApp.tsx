@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { UserList } from "@/components/messages/user-list";
 import { ChatWindow } from "@/components/messages/chat-window";
 import { ProfilePanel } from "@/components/messages/profile-panel";
@@ -8,7 +8,7 @@ import { GroupInfoPanel } from "@/components/messages/group-info-panel";
 import { NewChatModal } from "@/components/messages/new-chat-modal";
 import { CreateGroupModal } from "@/components/messages/create-group-modal";
 import { MyProfileProvider } from "@/components/messages/my-profile-context";
-import { Send, Menu, X, ChevronLeft, ChevronRight, UserCircle2 } from "lucide-react";
+import { Send, Menu, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { useSession } from "next-auth/react";
 
 type User = {
@@ -16,6 +16,7 @@ type User = {
   name?: string | null;
   picture?: string | null;
   isOnline?: boolean;
+  isAI?: boolean;
 };
 
 type Message = {
@@ -29,12 +30,50 @@ type Message = {
 type Session = {
   id: string;
   isGroup?: boolean;
+  isAi?: boolean;
   title?: string | null;
   lastMessage?: string | null;
   lastMessageAt?: string | null;
   participantIds?: string[];
   participants?: User[];
 };
+
+const AI_USER_ID = "ai-assistant";
+const AI_SESSION_ID = "ai-assistant-session";
+const AI_MESSAGES_STORAGE_KEY = "ai-assistant-messages";
+
+function createAiSession(currentUser?: User | null, messages: Message[] = []): Session {
+  const lastMessage = messages.at(-1);
+
+  return {
+    id: AI_SESSION_ID,
+    isAi: true,
+    isGroup: false,
+    title: "Chattie",
+    lastMessage: lastMessage?.text ?? "Chat with AI anytime",
+    lastMessageAt: lastMessage?.createdAt ?? new Date(0).toISOString(),
+    participantIds: [currentUser?.id ?? "me", AI_USER_ID],
+    participants: [
+      ...(currentUser
+        ? [
+            {
+              id: currentUser.id,
+              name: currentUser.name ?? "You",
+              picture: currentUser.picture ?? null,
+              isOnline: true,
+            },
+          ]
+        : []),
+      {
+        id: AI_USER_ID,
+        name: "Chattie AI",
+        picture: null,
+        isOnline: true,
+        isAI: true,
+      },
+    ],
+  };
+}
 
 export default function ChatApp() {
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -54,6 +93,7 @@ export default function ChatApp() {
   const [isResizingProfile, setIsResizingProfile] = useState(false);
   const [showNewChat, setShowNewChat] = useState(false);
   const [showCreateGroup, setShowCreateGroup] = useState(false);
+  const [aiIsResponding, setAiIsResponding] = useState(false);
 
   const SIDEBAR_MIN = 220;
   const SIDEBAR_MAX = 480;
@@ -85,21 +125,6 @@ export default function ChatApp() {
   useEffect(() => {
     localStorage.setItem("profilePanelWidth", String(profilePanelWidth));
   }, [profilePanelWidth]);
-
-  useEffect(() => {
-    if (!selectedSessionId) {
-      setPanelUserId(null);
-      return;
-    }
-    const s = sessions.find((x) => x.id === selectedSessionId);
-    if (!s || s.isGroup) {
-      setPanelUserId(null);
-      return;
-    }
-    const otherId =
-      s.participants?.find((p) => p.id !== session?.user?.id)?.id ?? null;
-    setPanelUserId(otherId);
-  }, [selectedSessionId]);
 
   const handleShowProfile = (userId: string) => {
     setPanelUserId(userId);
@@ -168,6 +193,7 @@ export default function ChatApp() {
   const typingTimeoutRef = useRef<number | null>(null);
   const toggleRef = useRef<HTMLButtonElement | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
+  const aiPendingRequestRef = useRef<string | null>(null);
 
   useEffect(() => {
     const el = inputRef.current;
@@ -178,6 +204,43 @@ export default function ChatApp() {
 
 
   const { data: session } = useSession();
+  const aiMessages = messages[AI_SESSION_ID] ?? [];
+
+  const aiSession = useMemo(
+    () =>
+      createAiSession(
+        session?.user?.id
+          ? {
+              id: session.user.id,
+              name: session.user.name ?? "You",
+              picture: session.user.image ?? null,
+              isOnline: true,
+            }
+          : null,
+        aiMessages,
+      ),
+    [aiMessages, session?.user?.id, session?.user?.image, session?.user?.name],
+  );
+
+  const allSessions = useMemo(() => {
+    const withoutAi = sessions.filter((item) => item.id !== AI_SESSION_ID);
+    return [aiSession, ...withoutAi];
+  }, [aiSession, sessions]);
+
+  useEffect(() => {
+    if (!selectedSessionId) {
+      setPanelUserId(null);
+      return;
+    }
+    const activeSession = allSessions.find((item) => item.id === selectedSessionId);
+    if (!activeSession || activeSession.isGroup || activeSession.isAi) {
+      setPanelUserId(null);
+      return;
+    }
+    const otherId =
+      activeSession.participants?.find((participant) => participant.id !== session?.user?.id)?.id ?? null;
+    setPanelUserId(otherId);
+  }, [allSessions, selectedSessionId, session?.user?.id]);
 
   /**
    * GET SESSIONS
@@ -189,10 +252,39 @@ export default function ChatApp() {
         setSessions(data);
         if (data.length && !selectedSessionId) {
           setSelectedSessionId(data[0].id);
+        } else if (!data.length && !selectedSessionId) {
+          setSelectedSessionId(AI_SESSION_ID);
         }
       })
       .catch(console.error);
   }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    try {
+      const raw = window.localStorage.getItem(AI_MESSAGES_STORAGE_KEY);
+      if (!raw) return;
+
+      const stored = JSON.parse(raw);
+      if (!Array.isArray(stored)) return;
+
+      setMessages((prev) => ({
+        ...prev,
+        [AI_SESSION_ID]: stored,
+      }));
+    } catch (error) {
+      console.error("Failed to load AI messages", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(
+      AI_MESSAGES_STORAGE_KEY,
+      JSON.stringify(aiMessages),
+    );
+  }, [aiMessages]);
 
   /**
    * GET USERS
@@ -233,6 +325,7 @@ export default function ChatApp() {
    */
   useEffect(() => {
     if (!selectedSessionId) return;
+    if (selectedSessionId === AI_SESSION_ID) return;
 
     fetch(`/api/sessions/${selectedSessionId}/messages`, {
       credentials: "include",
@@ -317,6 +410,59 @@ export default function ChatApp() {
             );
           }
 
+          if (data.type === "ai-start") {
+            setAiIsResponding(true);
+            aiPendingRequestRef.current = data.requestId;
+            return;
+          }
+
+          if (data.type === "ai-chunk") {
+            const requestId = data.requestId as string;
+            const chunk = typeof data.chunk === "string" ? data.chunk : "";
+            if (!requestId || !chunk) return;
+
+            setMessages((prev) => ({
+              ...prev,
+              [AI_SESSION_ID]: (prev[AI_SESSION_ID] ?? []).map((message) =>
+                message.id === requestId
+                  ? { ...message, text: `${message.text}${chunk}` }
+                  : message,
+              ),
+            }));
+            return;
+          }
+
+          if (data.type === "ai-end") {
+            if (aiPendingRequestRef.current === data.requestId) {
+              aiPendingRequestRef.current = null;
+              setAiIsResponding(false);
+            }
+            return;
+          }
+
+          if (data.type === "ai-error") {
+            const requestId = data.requestId as string;
+            const errorText =
+              typeof data.error === "string"
+                ? data.error
+                : "AI sedang belum bisa membalas. Coba lagi sebentar ya.";
+
+            setMessages((prev) => ({
+              ...prev,
+              [AI_SESSION_ID]: (prev[AI_SESSION_ID] ?? []).map((message) =>
+                message.id === requestId
+                  ? { ...message, text: errorText }
+                  : message,
+              ),
+            }));
+
+            if (aiPendingRequestRef.current === requestId) {
+              aiPendingRequestRef.current = null;
+              setAiIsResponding(false);
+            }
+            return;
+          }
+
           if (data.type === "presence") {
             setUsers((prev) => {
               const updated = prev.map((u) =>
@@ -386,6 +532,8 @@ export default function ChatApp() {
 
       ws.onclose = () => {
         setWsAlive(false);
+        aiPendingRequestRef.current = null;
+        setAiIsResponding(false);
 
         if (reconnectTimerRef.current)
           clearTimeout(reconnectTimerRef.current);
@@ -552,26 +700,87 @@ export default function ChatApp() {
    */
   const handleSendMessage = async () => {
     if (!inputValue.trim() || !selectedSessionId) return;
+    const trimmed = inputValue.trim();
+
+    if (selectedSessionId === AI_SESSION_ID) {
+      if (!session?.user?.id || aiIsResponding) return;
+      if (wsRef.current?.readyState !== WebSocket.OPEN) {
+        setMessages((prev) => ({
+          ...prev,
+          [AI_SESSION_ID]: [
+            ...(prev[AI_SESSION_ID] ?? []),
+            {
+              id: `ai-local-error-${Date.now()}`,
+              sessionId: AI_SESSION_ID,
+              text: "Koneksi WebSocket belum siap. Coba lagi sebentar ya.",
+              senderId: AI_USER_ID,
+              createdAt: new Date().toISOString(),
+            },
+          ],
+        }));
+        return;
+      }
+
+      const userMessage: Message = {
+        id: `ai-user-${Date.now()}`,
+        sessionId: AI_SESSION_ID,
+        text: trimmed,
+        senderId: session.user.id,
+        createdAt: new Date().toISOString(),
+      };
+
+      const assistantMessageId = `ai-assistant-${Date.now() + 1}`;
+      const assistantPlaceholder: Message = {
+        id: assistantMessageId,
+        sessionId: AI_SESSION_ID,
+        text: "",
+        senderId: AI_USER_ID,
+        createdAt: new Date().toISOString(),
+      };
+
+      const history = [...aiMessages, userMessage];
+
+      setMessages((prev) => ({
+        ...prev,
+        [AI_SESSION_ID]: [...history, assistantPlaceholder],
+      }));
+      setInputValue("");
+      setAiIsResponding(true);
+      aiPendingRequestRef.current = assistantMessageId;
+
+      wsRef.current.send(
+        JSON.stringify({
+          type: "ai-message",
+          requestId: assistantMessageId,
+          messages: history.map((message) => ({
+            role: message.senderId === session.user.id ? "user" : "assistant",
+            content: message.text,
+          })),
+        }),
+      );
+
+      return;
+    }
 
     const payload = {
       type: "message",
       sessionId: selectedSessionId,
-      text: inputValue.trim(),
+      text: trimmed,
       userId: session?.user?.id,
     };
 
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify(payload));
     } else {
-      await fetch("/api/messages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          sessionId: selectedSessionId,
-          text: inputValue.trim(),
-          userId: session?.user?.id,
-        }),
-      });
+        await fetch("/api/messages", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            sessionId: selectedSessionId,
+            text: trimmed,
+            userId: session?.user?.id,
+          }),
+        });
     }
 
     setInputValue("");
@@ -620,7 +829,7 @@ export default function ChatApp() {
           </div>
         )}
         <UserList
-          sessions={sessions}
+          sessions={allSessions}
           users={users}
           selectedSessionId={selectedSessionId}
           onSelectSession={(id) => {
@@ -663,7 +872,7 @@ export default function ChatApp() {
             <ChatWindow
               sessionId={selectedSessionId}
               messages={messages[selectedSessionId] ?? []}
-              sessions={sessions}
+              sessions={allSessions}
               currentUserId={session?.user?.id ?? ""}
               typingUsers={Array.from(typingUsers)}
               users={users}
@@ -678,7 +887,11 @@ export default function ChatApp() {
                 rows={1}
                 onChange={(e) => setInputValue(e.target.value)}
                 onInput={() => {
-                  if (wsRef.current?.readyState === WebSocket.OPEN && selectedSessionId) {
+                  if (
+                    selectedSessionId !== AI_SESSION_ID &&
+                    wsRef.current?.readyState === WebSocket.OPEN &&
+                    selectedSessionId
+                  ) {
                     wsRef.current.send(JSON.stringify({
                       type: "typing",
                       sessionId: selectedSessionId,
@@ -698,7 +911,7 @@ export default function ChatApp() {
                   }
                 }}
                 className="flex-1 resize-none border border-border bg-input rounded-lg px-4 py-3 text-sm leading-5 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition max-h-40 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
-                placeholder="Type your message..."
+                placeholder={selectedSessionId === AI_SESSION_ID ? "Ask Chattie AI anything..." : "Type your message..."}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
@@ -708,7 +921,8 @@ export default function ChatApp() {
               />
               <button
                 onClick={handleSendMessage}
-                className="bg-primary hover:bg-accent text-primary-foreground px-4 py-3 rounded-lg cursor-pointer transition-colors duration-200 flex items-center justify-center shrink-0"
+                disabled={selectedSessionId === AI_SESSION_ID && aiIsResponding}
+                className="bg-primary hover:bg-accent disabled:opacity-60 disabled:cursor-not-allowed text-primary-foreground px-4 py-3 rounded-lg cursor-pointer transition-colors duration-200 flex items-center justify-center shrink-0"
               >
                 <Send size={18} />
               </button>
@@ -725,7 +939,7 @@ export default function ChatApp() {
 
       {showProfilePanel && (() => {
         const activeSession = selectedSessionId
-          ? sessions.find((s) => s.id === selectedSessionId)
+          ? allSessions.find((s) => s.id === selectedSessionId)
           : undefined;
 
         if (activeSession?.isGroup) {

@@ -14,6 +14,7 @@ interface Participant {
 type Session = {
   id: string;
   isGroup?: boolean;
+  isAi?: boolean;
   title?: string | null;
   lastMessage?: string | null;
   lastMessageAt?: string | null;
@@ -67,6 +68,9 @@ export function UserList({
 
     // Sort: sessions with messages first (newest -> oldest), then no-message sessions.
     return [...matched].sort((a, b) => {
+      if (a.isAi && !b.isAi) return -1;
+      if (!a.isAi && b.isAi) return 1;
+
       const aTime = a.lastMessageAt ? new Date(a.lastMessageAt).getTime() : 0;
       const bTime = b.lastMessageAt ? new Date(b.lastMessageAt).getTime() : 0;
       return bTime - aTime;
@@ -177,7 +181,11 @@ export function UserList({
                       >
                         {displayName}
                       </p>
-                      {timeStr && (
+                      {session.isAi ? (
+                        <span className="text-[10px] uppercase tracking-[0.14em] text-primary shrink-0">
+                          AI
+                        </span>
+                      ) : timeStr && (
                         <span className="text-xs text-muted-foreground shrink-0">
                           {timeStr}
                         </span>

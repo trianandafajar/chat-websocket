@@ -1,3 +1,4 @@
+import "dotenv/config";
 import http from "http";
 import next from "next";
 import { getOrCreateWSS } from "./lib/ws.js";
