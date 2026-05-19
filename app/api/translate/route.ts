@@ -44,9 +44,19 @@ export async function POST(req: NextRequest) {
     });
 
     if (!res.ok) {
-      const errText = await res.text().catch(() => "");
+      let errText = await res.text().catch(() => "");
+      const isHtml =
+        errText.trim().startsWith("<") ||
+        errText.includes("<html") ||
+        errText.includes("<!DOCTYPE") ||
+        /<[a-z/][\s\S]*>/i.test(errText);
+      
+      if (isHtml) {
+        errText = "Too many requests or service unavailable.";
+      }
+
       return new Response(
-        `Translation service error: ${res.status} ${errText}`,
+        `Translation service error: ${res.status} - ${errText}`,
         { status: 502 },
       );
     }

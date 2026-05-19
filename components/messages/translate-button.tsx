@@ -67,7 +67,16 @@ export function TranslateButton({
         body: JSON.stringify({ text, target: code }),
       });
       if (!res.ok) {
-        const msg = await res.text().catch(() => "");
+        let msg = await res.text().catch(() => "");
+        const isHtml =
+          msg.trim().startsWith("<") ||
+          msg.includes("<html") ||
+          msg.includes("<!DOCTYPE") ||
+          /<[a-z/][\s\S]*>/i.test(msg);
+
+        if (isHtml) {
+          msg = "Translation service is currently busy or rate-limited. Please try again later.";
+        }
         throw new Error(msg || `HTTP ${res.status}`);
       }
       const data = await res.json();
@@ -78,7 +87,17 @@ export function TranslateButton({
       });
     } catch (err) {
       console.error("translate error", err);
-      setError(err instanceof Error ? err.message : "Translation failed");
+      let errMsg = err instanceof Error ? err.message : "Translation failed";
+      const isHtml =
+        errMsg.trim().startsWith("<") ||
+        errMsg.includes("<html") ||
+        errMsg.includes("<!DOCTYPE") ||
+        /<[a-z/][\s\S]*>/i.test(errMsg);
+
+      if (isHtml) {
+        errMsg = "Translation service is currently busy or rate-limited. Please try again later.";
+      }
+      setError(errMsg);
     } finally {
       setLoading(false);
     }
