@@ -47,17 +47,17 @@ export default function NotFound() {
             404
           </h1>
           <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-foreground text-background text-[9px] font-mono font-bold px-2 py-0.5 uppercase tracking-wider rounded-sm">
-            Koneksi Terputus
+            Lost Connection
           </div>
         </div>
 
         {/* Message */}
         <div className="space-y-3">
           <h2 className="text-xl font-bold text-foreground">
-            Halaman Tidak Ditemukan
+            Page Not Found
           </h2>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Maaf, halaman yang Anda cari tidak dapat ditemukan. Alamat URL mungkin salah, atau halaman telah dipindahkan.
+            Sorry, the page you are looking for could not be found. The URL might be misspelled, or the page has been moved.
           </p>
         </div>
 
@@ -68,14 +68,14 @@ export default function NotFound() {
             className="flex-1 px-4 py-3 cursor-pointer bg-card hover:bg-muted text-xs font-bold uppercase tracking-wider rounded-md border border-border text-foreground transition-all duration-150 flex items-center justify-center gap-2"
           >
             <ArrowLeft className="w-4 h-4" />
-            Kembali
+            Go Back
           </button>
           <Link
             href="/"
             className="flex-1 px-4 py-3 bg-primary hover:opacity-90 text-white text-xs font-bold uppercase tracking-wider rounded-md transition-all duration-150 flex items-center justify-center gap-2"
           >
             <Home className="w-4 h-4" />
-            Ke Beranda
+            Go Home
           </Link>
         </div>
       </div>
