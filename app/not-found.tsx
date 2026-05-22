@@ -25,14 +25,14 @@ export default function NotFound() {
         {/* Brand Logo */}
         <Link
           href="/"
-          className="group flex items-center gap-1.5 rounded-md px-2 py-1 transition-colors hover:bg-muted/40"
+          className="group flex items-center gap-2 rounded-md px-2 py-1 transition-colors hover:bg-muted/40"
         >
           <Image
-            src="/android-chrome-512x512.png"
+            src="/logo.svg"
             alt="Logo"
-            width={32}
+            width={40}
             height={32}
-            className="rounded-md ring-1 ring-primary/20 shadow-sm"
+            className="h-8 w-auto"
             priority
           />
           <span className="text-[18px] font-bold tracking-[-0.01em] leading-none text-foreground">

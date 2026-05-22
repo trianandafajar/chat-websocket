@@ -5,6 +5,13 @@ export const metadata = {
   title: "Privacy Policy - Chat App",
   description:
     "Learn how Chat App collects, uses, and protects your information.",
+  openGraph: {
+    title: "Privacy Policy - Chat App",
+    description:
+      "Learn how Chat App collects, uses, and protects your information.",
+    type: "website",
+    images: [{ url: "/logo.svg" }],
+  },
 };
 
 const sections: LegalSection[] = [

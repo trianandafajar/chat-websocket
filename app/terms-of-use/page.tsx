@@ -5,6 +5,13 @@ export const metadata = {
   title: "Terms of Use - Chat App",
   description:
     "Read the terms that apply when you access or use Chat App.",
+  openGraph: {
+    title: "Terms of Use - Chat App",
+    description:
+      "Read the terms that apply when you access or use Chat App.",
+    type: "website",
+    images: [{ url: "/logo.svg" }],
+  },
 };
 
 const sections: LegalSection[] = [

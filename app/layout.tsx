@@ -15,21 +15,18 @@ export const metadata: Metadata = {
   manifest: "/site.webmanifest",
   icons: {
     icon: [
-      { url: "/favicon.ico", sizes: "any" },
-      { url: "/favicon-16x16.png", type: "image/png", sizes: "16x16" },
-      { url: "/favicon-32x32.png", type: "image/png", sizes: "32x32" },
-      { url: "/android-chrome-192x192.png", type: "image/png", sizes: "192x192" },
-      { url: "/android-chrome-512x512.png", type: "image/png", sizes: "512x512" },
+      { url: "/logo.svg", type: "image/svg+xml" },
     ],
+    shortcut: [{ url: "/logo.svg", type: "image/svg+xml" }],
     apple: [
-      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+      { url: "/logo.svg", type: "image/svg+xml" },
     ],
   },
   openGraph: {
     title: "Chat - Instant Messaging",
     description: "Clean and simple chat application. Connect instantly.",
     type: "website",
-    images: [{ url: "/android-chrome-512x512.png", width: 512, height: 512 }],
+    images: [{ url: "/logo.svg" }],
   },
 }
 

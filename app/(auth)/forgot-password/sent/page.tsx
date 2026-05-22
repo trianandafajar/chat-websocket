@@ -11,13 +11,13 @@ export default function EmailSentPage() {
 
         <div className="bg-card p-6 space-y-6 border border-border rounded-lg text-center">
 
-          <Link href="/" className="flex items-center justify-center gap-1.5">
+          <Link href="/" className="flex items-center justify-center gap-2">
             <Image
-              src="/android-chrome-512x512.png"
+              src="/logo.svg"
               alt="Logo"
-              width={42}
-              height={42}
-              className="rounded-md ring-1 ring-primary/20 shadow-sm"
+              width={56}
+              height={44}
+              className="h-11 w-auto"
               priority
             />
             <span className="text-lg font-bold tracking-[-0.01em] leading-none text-foreground">
