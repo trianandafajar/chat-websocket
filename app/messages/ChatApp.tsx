@@ -1038,6 +1038,7 @@ export default function ChatApp() {
                 aria-hidden="true"
               />
               <ProfilePanel
+                key={panelUserId}
                 userId={panelUserId}
                 isSelf={panelUserId === session?.user?.id}
                 onClose={() => setShowProfilePanel(false)}
