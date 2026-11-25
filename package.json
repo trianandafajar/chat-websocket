@@ -10,7 +10,7 @@
     "start": "cross-env NODE_ENV=production node server.mjs",
     "prisma:seed": "npx prisma db seed",
     "prisma:start": "npx prisma generate && npx prisma db push",
-    "postinstall": "prisma generate",
+    "postinstall": "prisma generate"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
